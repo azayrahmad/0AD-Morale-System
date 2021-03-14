@@ -229,12 +229,10 @@ Morale.prototype.ApplyMoraleInfluence = function(ents)
 	cmpModifiersManager.AddModifiers(
 		"MoraleSupport", 
 		{
-			"Morale/RegenRate": [{ "affects": ["Unit"], "add": 1 }],
-			"Health/RegenRate": [{ "affects": ["Unit"], "add": 1 }]
+			"Morale/RegenRate": [{ "affects": ["Unit"], "add": 1 }]
 		},
 		ents
 	);
-	warn("apply")
 }
 
 Morale.prototype.RemoveMoraleInfluence = function(ents)
@@ -243,7 +241,6 @@ Morale.prototype.RemoveMoraleInfluence = function(ents)
 		return;
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
 	cmpModifiersManager.RemoveAllModifiers("MoraleSupport", ents);
-	warn("remove")
 }
 
 Morale.prototype.CleanMoraleInfluence = function()
@@ -254,7 +251,6 @@ Morale.prototype.CleanMoraleInfluence = function()
 	let targetUnitsClone = [];
 	if (this.targetUnits)
 	{
-		warn("onclean")
 		targetUnitsClone = this.targetUnits.slice();
 		this.RemoveMoraleInfluence(this.targetUnits);		
 	}
@@ -316,7 +312,6 @@ Morale.prototype.OnRangeUpdate = function(msg)
 {
 	if(this.rangeQuery)
 	{
-		warn("OnRangeUpdate")
 		this.ApplyMoraleInfluence(msg.added);
 		this.RemoveMoraleInfluence(msg.removed);
 	}
