@@ -1,0 +1,7 @@
+{
+	"name": "morale-system",
+	"version": "0.0.1",
+	"label": "Morale System",
+	"description": "Morale system for 0AD units.",
+	"dependencies": ["0ad=0.0.24"]
+}

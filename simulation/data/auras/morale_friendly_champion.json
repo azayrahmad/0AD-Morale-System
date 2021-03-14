@@ -1,0 +1,12 @@
+{
+	"type": "range",
+	"radius": 10,
+	"affects": ["Unit"],
+	"affectedPlayers": ["Player", "Ally"],
+	"modifications": [
+		{ "value": "Morale/RegenRate", "add": 2 }
+	],
+	"auraName": "Morale Support",
+	"auraDescription": "Humans 2 morale regeneration rate.",
+	"stackable": "true"
+}

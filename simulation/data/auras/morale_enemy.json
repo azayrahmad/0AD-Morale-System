@@ -1,0 +1,12 @@
+{
+	"type": "range",
+	"radius": 10,
+	"affects": ["Unit"],
+	"affectedPlayers": ["Enemy"],
+	"modifications": [
+		{ "value": "Morale/RegenRate", "add": -1 }
+	],
+	"auraName": "Demoralize",
+	"auraDescription": "Units -1 morale regeneration rate.",
+	"stackable": "true"
+}
