@@ -16,10 +16,10 @@ Morale.prototype.Schema =
 			"<ref name='nonNegativeDecimal'/>" +
 		"</element>" +
 	"</optional>" +
-	"<element name='RegenRate' a:help='Hitpoint regeneration rate per second.'>" +
+	"<element name='RegenRate' a:help='Morale regeneration rate per second.'>" +
 		"<data type='decimal'/>" +
 	"</element>" +
-	"<element name='IdleRegenRate' a:help='Hitpoint regeneration rate per second when idle or garrisoned.'>" +
+	"<element name='IdleRegenRate' a:help='Morale regeneration rate per second when idle or garrisoned.'>" +
 		"<data type='decimal'/>" +
 	"</element>" +
 	"<element name='Radius' a:help='Range of morale influence.'>" +
@@ -30,13 +30,14 @@ Morale.prototype.Init = function()
 {
 	this.affectedPlayers = [];
 
-	// Cache this value so it allows techs to maintain previous Morale level
+	// Cache this value so it allows techs to maintain previous morale level
 	this.maxMorale = +this.template.Max;
 	// Default to <Initial>, but use <Max> if it's undefined or zero
 	this.Morale = +(this.template.Initial || this.GetMaxMorale());
 	this.regenRate = ApplyValueModificationsToEntity("Morale/RegenRate", +this.template.RegenRate, this.entity);
 	this.idleRegenRate = ApplyValueModificationsToEntity("Morale/IdleRegenRate", +this.template.IdleRegenRate, this.entity);
 	
+	//TODO: Maybe these functions should switch places?
 	this.CleanMoraleInfluence();
 	this.CheckRegenTimer();
 };
@@ -54,6 +55,7 @@ Morale.prototype.GetMorale = function()
  */
 Morale.prototype.GetMoraleLevel = function()
 {
+	//TODO: Use Math.ceil(this.Morale / 20)
 	if (this.Morale > 80)
 		return 5;
 	else if (this.Morale > 60)
@@ -143,7 +145,7 @@ Morale.prototype.CheckRegenTimer = function()
 };
 
 /**
- * @param {number} amount - The amount of Morale to substract. Kills the entity if required.
+ * @param {number} amount - The amount of Morale to substract. Stop reduction once reached 0.
  * @return {{ MoraleChange:number }} -  Number of Morale points lost.
  */
 Morale.prototype.Reduce = function(amount)
@@ -152,7 +154,7 @@ Morale.prototype.Reduce = function(amount)
 		return { "MoraleChange": 0 };
 
 	let oldMorale = this.Morale;
-	// If we reached 0, then die.
+	// If we reached 0, then stop reducing.
 	if (amount >= this.Morale)
 	{
 		this.Morale = 0;
@@ -197,11 +199,14 @@ Morale.prototype.RecalculateValues = function()
 	if (this.regenRate != oldRegenRate || this.idleRegenRate != oldIdleRegenRate)
 		this.CheckRegenTimer();
 };
-// For Morale Influence
 
+//
+// For Morale Influence
+//
 Morale.prototype.ApplyMorale = function(ents)
 {
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
+	//TODO: Make this modifiable via template
 	cmpModifiersManager.AddModifiers(
 		"LowMorale", 
 		{
@@ -226,6 +231,9 @@ Morale.prototype.RemoveMorale = function(ents)
 Morale.prototype.ApplyMoraleInfluence = function(ents)
 {
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
+	//TODO: Make this modifiable via template
+	//TODO: Maybe use this.xxx instead of ModifiersManager?
+	//TODO: Include this.Morale in calculating influence
 	cmpModifiersManager.AddModifiers(
 		"MoraleSupport", 
 		{
