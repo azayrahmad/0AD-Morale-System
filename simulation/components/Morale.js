@@ -180,12 +180,12 @@ Morale.prototype.RecalculateMoraleValues = function()
 		this.CheckMoraleRegenTimer();
 };
 
-Morale.prototype.ApplyMoraleEffects = function(ents)
+Morale.prototype.ApplyMoraleEffects = function(ent)
 {
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
 	//TODO: Make this modifiable via template
 	cmpModifiersManager.AddModifiers(
-		"LowMorale", 
+		"Demoralized", 
 		{
 			"UnitMotion/WalkSpeed": [{ "affects": ["Unit"], "multiply": 0.75 }],
 			"Attack/Melee/RepeatTime": [{ "affects": ["Unit"], "multiply": 1.25 }],
@@ -193,7 +193,7 @@ Morale.prototype.ApplyMoraleEffects = function(ents)
 			"Builder/Rate": [{ "affects": ["Unit"], "multiply": 0.75 }],
 			"ResourceGatherer/BaseSpeed": [{ "affects": ["Unit"], "multiply": 0.75 }]
 		},
-		ents
+		ent
 	);
 }
 
@@ -202,7 +202,7 @@ Morale.prototype.RemoveMoraleEffects = function(ents)
 	if (!ents.length)
 		return;
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-	cmpModifiersManager.RemoveAllModifiers("LowMorale", ents);
+	cmpModifiersManager.RemoveAllModifiers("Demoralized", ents);
 }
 
 //
@@ -214,11 +214,12 @@ Morale.prototype.ApplyMoraleInfluence = function(ents)
 	for (let ent of ents)
 	{
 		cmpModifiersManager.AddModifiers(
-			"MoraleSupport", 
+			"MoraleAllies", 
 			{
 				"Morale/RegenRate": [{ "affects": ["Unit"], "add": this.GetMoraleLevel() }],
 			},
-			ent
+			ent,
+			true
 		);
 	}
 }
@@ -231,7 +232,7 @@ Morale.prototype.RemoveMoraleInfluence = function(ents)
 	for (let ent of ents)
 	{
 		var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-		cmpModifiersManager.RemoveAllModifiers("MoraleSupport", ent);
+		cmpModifiersManager.RemoveAllModifiers("MoraleAllies", ent);
 	}
 }
 
