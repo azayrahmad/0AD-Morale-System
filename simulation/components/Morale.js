@@ -6,7 +6,7 @@ Morale.prototype.Schema =
 		"<Max>100</Max>" +
 		"<RegenRate>1.0</RegenRate>" +
 		"<IdleRegenRate>0</IdleRegenRate>" +
-		"<Radius>10</Radius>" +
+		"<Range>10</Range>" +
 	"</a:example>" +
 	"<element name='Max' a:help='Maximum Morale'>" +
 		"<ref name='nonNegativeDecimal'/>" +
@@ -22,7 +22,7 @@ Morale.prototype.Schema =
 	"<element name='IdleRegenRate' a:help='Morale regeneration rate per second when idle or garrisoned.'>" +
 		"<data type='decimal'/>" +
 	"</element>" +
-	"<element name='Radius' a:help='Range of morale influence.'>" +
+	"<element name='Range' a:help='Range of morale influence.'>" +
 		"<data type='decimal'/>" +
 	"</element>";
 
@@ -36,36 +36,19 @@ Morale.prototype.Init = function()
 	this.Morale = +(this.template.Initial || this.GetMaxMorale());
 	this.regenRate = ApplyValueModificationsToEntity("Morale/RegenRate", +this.template.RegenRate, this.entity);
 	this.idleRegenRate = ApplyValueModificationsToEntity("Morale/IdleRegenRate", +this.template.IdleRegenRate, this.entity);
-	
-	//TODO: Maybe these functions should switch places?
+
+	this.CheckMoraleRegenTimer();	
 	this.CleanMoraleInfluence();
-	this.CheckRegenTimer();
 };
 
-/**
- * Returns the current Morale value.
- */
 Morale.prototype.GetMorale = function()
 {
 	return this.Morale;
 };
 
-/**
- * Returns the current Morale level.
- */
 Morale.prototype.GetMoraleLevel = function()
 {
-	//TODO: Use Math.ceil(this.Morale / 20)
-	if (this.Morale > 80)
-		return 5;
-	else if (this.Morale > 60)
-		return 4;
-	else if (this.Morale > 40)
-		return 3;
-	else if (this.Morale > 20)
-		return 2;
-	else
-		return 1;
+	return Math.ceil(this.Morale / 20);
 };
 
 Morale.prototype.GetMaxMorale = function()
@@ -101,25 +84,23 @@ Morale.prototype.ExecuteRegeneration = function()
 	}
 
 	if (regen > 0)
-		this.Increase(regen);
+		this.IncreaseMorale(regen);
 	else
-		this.Reduce(-regen);
+		this.ReduceMorale(-regen);
 
 	let threshold = 2
 	let moraleLevel = this.GetMoraleLevel()
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
     if (moraleLevel <= 2)
-    {
-		this.ApplyMorale(this.entity)
-    }
+		this.ApplyMoraleEffects(this.entity)
     else
-    	this.RemoveMorale(this.entity)	
+    	this.RemoveMoraleEffects(this.entity)	
 };
 
 /*
  * Check if the regeneration timer needs to be started or stopped
  */
-Morale.prototype.CheckRegenTimer = function()
+Morale.prototype.CheckMoraleRegenTimer = function()
 {
 	// check if we need a timer
 	if (this.GetRegenRate() == 0 && this.GetIdleRegenRate() == 0 ||
@@ -148,7 +129,7 @@ Morale.prototype.CheckRegenTimer = function()
  * @param {number} amount - The amount of Morale to substract. Stop reduction once reached 0.
  * @return {{ MoraleChange:number }} -  Number of Morale points lost.
  */
-Morale.prototype.Reduce = function(amount)
+Morale.prototype.ReduceMorale = function(amount)
 {
 	if (!amount || !this.Morale)
 		return { "MoraleChange": 0 };
@@ -168,7 +149,7 @@ Morale.prototype.Reduce = function(amount)
 };
 
 
-Morale.prototype.Increase = function(amount)
+Morale.prototype.IncreaseMorale = function(amount)
 {
 	let old = this.Morale;
 	this.Morale = Math.min(this.Morale + amount, this.GetMaxMorale());
@@ -178,8 +159,7 @@ Morale.prototype.Increase = function(amount)
 	return { "old": old, "new": this.Morale };
 };
 
-
-Morale.prototype.RecalculateValues = function()
+Morale.prototype.RecalculateMoraleValues = function()
 {
 	let oldMaxMorale = this.GetMaxMorale();
 	let newMaxMorale = ApplyValueModificationsToEntity("Morale/Max", +this.template.Max, this.entity);
@@ -197,13 +177,10 @@ Morale.prototype.RecalculateValues = function()
 	this.idleRegenRate = ApplyValueModificationsToEntity("Morale/IdleRegenRate", +this.template.IdleRegenRate, this.entity);
 
 	if (this.regenRate != oldRegenRate || this.idleRegenRate != oldIdleRegenRate)
-		this.CheckRegenTimer();
+		this.CheckMoraleRegenTimer();
 };
 
-//
-// For Morale Influence
-//
-Morale.prototype.ApplyMorale = function(ents)
+Morale.prototype.ApplyMoraleEffects = function(ents)
 {
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
 	//TODO: Make this modifiable via template
@@ -220,7 +197,7 @@ Morale.prototype.ApplyMorale = function(ents)
 	);
 }
 
-Morale.prototype.RemoveMorale = function(ents)
+Morale.prototype.RemoveMoraleEffects = function(ents)
 {
 	if (!ents.length)
 		return;
@@ -228,46 +205,42 @@ Morale.prototype.RemoveMorale = function(ents)
 	cmpModifiersManager.RemoveAllModifiers("LowMorale", ents);
 }
 
+//
+// For Morale Influence
+//
 Morale.prototype.ApplyMoraleInfluence = function(ents)
 {
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-	//TODO: Make this modifiable via template
-	//TODO: Maybe use this.xxx instead of ModifiersManager?
-	//TODO: Include this.Morale in calculating influence
-	cmpModifiersManager.AddModifiers(
-		"MoraleSupport", 
-		{
-			"Morale/RegenRate": [{ "affects": ["Unit"], "add": 1 }]
-		},
-		ents
-	);
+	for (let ent of ents)
+	{
+		cmpModifiersManager.AddModifiers(
+			"MoraleSupport", 
+			{
+				"Morale/RegenRate": [{ "affects": ["Unit"], "add": this.GetMoraleLevel() }],
+			},
+			ent
+		);
+	}
 }
 
 Morale.prototype.RemoveMoraleInfluence = function(ents)
 {
 	if (!ents.length)
 		return;
-	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-	cmpModifiersManager.RemoveAllModifiers("MoraleSupport", ents);
+
+	for (let ent of ents)
+	{
+		var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
+		cmpModifiersManager.RemoveAllModifiers("MoraleSupport", ent);
+	}
 }
 
 Morale.prototype.CleanMoraleInfluence = function()
 {
 	var cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
 	
-	//Remove Morale
-	let targetUnitsClone = [];
-	if (this.targetUnits)
-	{
-		targetUnitsClone = this.targetUnits.slice();
-		this.RemoveMoraleInfluence(this.targetUnits);		
-	}
-	
 	if (this.rangeQuery)
 		cmpRangeManager.DestroyActiveQuery(this.rangeQuery);
-
-	//Add Morale
-	//this.CalculateAffectedPlayers();
 
 	var cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
 	if (!cmpPlayer)
@@ -276,13 +249,11 @@ Morale.prototype.CleanMoraleInfluence = function()
 	if (!cmpPlayer || cmpPlayer.GetState() == "defeated")
 		return;
 
-	this.targetUnits = [];
-
 	let affectedPlayers = cmpPlayer.GetAllies();
 	this.rangeQuery = cmpRangeManager.CreateActiveQuery(
 		this.entity,
 		0,
-		10,
+		this.template.Range,
 		affectedPlayers,
 		IID_Identity,
 		cmpRangeManager.GetEntityFlagMask("normal"),
@@ -291,30 +262,6 @@ Morale.prototype.CleanMoraleInfluence = function()
 	cmpRangeManager.EnableActiveQuery(this.rangeQuery);
 
 }
-
-Morale.prototype.CalculateAffectedPlayers = function()
-{
-	var affectedPlayers = ["Player"];
-	this.affectedPlayers = [];
-
-	var cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
-	if (!cmpPlayer)
-		cmpPlayer = QueryOwnerInterface(this.entity);
-
-	if (!cmpPlayer || cmpPlayer.GetState() == "defeated")
-		return;
-
-	let cmpPlayerManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_PlayerManager);
-	for (let i of cmpPlayerManager.GetAllPlayers())
-	{
-		let cmpAffectedPlayer = QueryPlayerIDInterface(i);
-		if (!cmpAffectedPlayer || cmpAffectedPlayer.GetState() == "defeated")
-			continue;
-
-		if (affectedPlayers.some(p => p == "Player" ? cmpPlayer.GetPlayerID() == i : cmpPlayer["Is" + p](i)))
-			this.affectedPlayers.push(i);
-	}
-};
 
 Morale.prototype.OnRangeUpdate = function(msg)
 {
@@ -325,18 +272,17 @@ Morale.prototype.OnRangeUpdate = function(msg)
 	}
 }
 
-
 Morale.prototype.OnValueModification = function(msg)
 {
 	if (msg.component == "Morale")
-		this.RecalculateValues();
+		this.RecalculateMoraleValues();
 };
 
 Morale.prototype.OnOwnershipChanged = function(msg)
 {
 	this.CleanMoraleInfluence();
 	if (msg.to != INVALID_PLAYER)
-		this.RecalculateValues();
+		this.RecalculateMoraleValues();
 };
 
 Morale.prototype.OnDiplomacyChanged = function(msg)
@@ -348,9 +294,16 @@ Morale.prototype.OnDiplomacyChanged = function(msg)
 		this.CleanMoraleInfluence();
 };
 
+Morale.prototype.OnGlobalPlayerDefeated = function(msg)
+{
+	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
+	if (cmpPlayer && cmpPlayer.GetPlayerID() == msg.playerId)
+		this.CleanMoraleInfluence();
+};
+
 Morale.prototype.RegisterMoraleChanged = function(from)
 {
-	this.CheckRegenTimer();
+	this.CheckMoraleRegenTimer();
 	Engine.PostMessage(this.entity, MT_MoraleChanged, { "from": from, "to": this.Morale });
 };
 
