@@ -29,6 +29,7 @@ Morale.prototype.Schema =
 Morale.prototype.Init = function()
 {
 	this.affectedPlayers = [];
+	this.affectedPlayersEnemies = [];
 
 	// Cache this value so it allows techs to maintain previous morale level
 	this.maxMorale = +this.template.Max;
@@ -104,8 +105,7 @@ Morale.prototype.CheckMoraleRegenTimer = function()
 {
 	// check if we need a timer
 	if (this.GetRegenRate() == 0 && this.GetIdleRegenRate() == 0 ||
-	    this.Morale == this.GetMaxMorale() && this.GetRegenRate() >= 0 && this.GetIdleRegenRate() >= 0 ||
-	    this.Morale == 0)
+	    this.Morale == this.GetMaxMorale() && this.GetRegenRate() >= 0 && this.GetIdleRegenRate() >= 0)
 	{
 		// we don't need a timer, disable if one exists
 		if (this.regenTimer)
@@ -208,17 +208,19 @@ Morale.prototype.RemoveMoraleEffects = function(ents)
 //
 // For Morale Influence
 //
+// Applying morale influence by updating regenRate of all entities in range.
 Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 {
 	//Calculate morale influence
-	let moraleInfluence = (this.GetMoraleLevel()) * (ally ? 1 : -1)
+	//TODO: multiply by Morale Level
+	let moraleInfluence =  (ally ? 1 : -1)
 	if (moraleInfluence == 0)
 		return;
 
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-
 	for (let ent of ents)
 	{
+		var cmpMorale = Engine.QueryInterface(ent, IID_Morale);
 		cmpModifiersManager.AddModifiers(
 			ally ? "MoraleAllies" : "MoraleEnemies", 
 			{
@@ -227,7 +229,26 @@ Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 			ent,
 			true
 		);
-	}		
+	}
+}
+
+//Alternative Morale Apply by updating unit regenRate based on amount entities in range. Not currently used
+Morale.prototype.ApplyMoraleInfluenceAlt = function(ents, ally)
+{
+	let moraleInfluence =  (ally ? 1 : -1)
+	if (moraleInfluence == 0)
+		return;
+
+	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
+
+	if (ents)
+	{
+		let oldRegenRate = this.regenRate
+		this.regenRate = +this.template.RegenRate + (moraleInfluence * ents.length);
+		if (oldRegenRate != this.regenRate )
+			this.CheckMoraleRegenTimer();
+
+	}
 }
 
 Morale.prototype.RemoveMoraleInfluence = function(ents, ally)
@@ -245,7 +266,12 @@ Morale.prototype.RemoveMoraleInfluence = function(ents, ally)
 Morale.prototype.CleanMoraleInfluence = function()
 {
 	var cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
-	
+
+	if(this.affectedPlayers)
+		this.RemoveMoraleInfluence(this.affectedPlayers, true);
+	if(this.affectedPlayersEnemies)
+		this.RemoveMoraleInfluence(this.affectedPlayersEnemies, false);
+
 	if (this.rangeQuery)
 		cmpRangeManager.DestroyActiveQuery(this.rangeQuery);
 	if (this.rangeQueryEnemy)
@@ -258,24 +284,24 @@ Morale.prototype.CleanMoraleInfluence = function()
 	if (!cmpPlayer || cmpPlayer.GetState() == "defeated")
 		return;
 
-	let affectedPlayers = cmpPlayer.GetAllies();
+	this.affectedPlayers = cmpPlayer.GetAllies();
 	this.rangeQuery = cmpRangeManager.CreateActiveQuery(
 		this.entity,
 		0,
 		this.template.Range,
-		affectedPlayers,
+		this.affectedPlayers,
 		IID_Identity,
 		cmpRangeManager.GetEntityFlagMask("normal"),
 		false
 	);
 	cmpRangeManager.EnableActiveQuery(this.rangeQuery);
 
-	let affectedPlayersEnemies = cmpPlayer.GetEnemies();
+	this.affectedPlayersEnemies = cmpPlayer.GetEnemies();
 	this.rangeQueryEnemy = cmpRangeManager.CreateActiveQuery(
 		this.entity,
 		0,
 		this.template.Range,
-		affectedPlayersEnemies,
+		this.affectedPlayersEnemies,
 		IID_Identity,
 		cmpRangeManager.GetEntityFlagMask("normal"),
 		false
