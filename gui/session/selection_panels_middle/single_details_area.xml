@@ -10,10 +10,10 @@
 		<object size="0 0 100% 60" type="image" sprite="topEdgedPanelShader">
 
 			<!-- Placeholders storing the position for the bars. -->
-			<object size="96 1 100% 24" name="sectionPosTop" hidden="true"/>
-			<object size="96 24 100% 34" name="sectionPosMorale" hidden="true"/>
-			<object size="96 32 100% 55" name="sectionPosMiddle" hidden="true"/>
-			<object size="96 42 100% 65" name="sectionPosBottom" hidden="true"/>
+			<object size="96 0 100% 24" name="sectionPosTop" hidden="true"/>
+			<object size="96 20 100% 34" name="sectionPosMorale" hidden="true"/>
+			<object size="96 28 100% 55" name="sectionPosMiddle" hidden="true"/>
+			<object size="96 40 100% 65" name="sectionPosBottom" hidden="true"/>
 
 			<!-- Health bar -->
 			<object name="healthSection">
