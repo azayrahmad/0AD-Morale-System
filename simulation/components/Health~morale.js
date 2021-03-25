@@ -39,13 +39,15 @@ Health.prototype.Reduce = function(amount)
 
 	// Morale modifiers, units below 1/2 of their max hp receive penalties
 	let cmpHealth = QueryMiragedInterface(this.entity, IID_Health);
+	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
 	let currentHp = cmpHealth.GetHitpoints();
-	let treshold = cmpHealth.GetMaxHitpoints() / 2; 
-	if (currentHp <= treshold ) 
-	{
-		var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-		cmpModifiersManager.AddModifiers("CriticallyWounded", {"Morale/RegenRate": [{ "affects": ["Unit"], "add": -1 }]}, this.entity);
-	}
+	let maxHp = cmpHealth.GetMaxHitpoints()
+	let threshold =  maxHp / 2; 
+	if (currentHp <= threshold ) 
+		cmpModifiersManager.AddModifiers("BadlyWoundedMorale", {"Morale/RegenRate": [{ "affects": ["Unit"], "add": -5 }]}, this.entity);
+	else if (currentHp < maxHp)
+		cmpModifiersManager.AddModifiers("InjuredMorale", {"Morale/RegenRate": [{ "affects": ["Unit"], "add": -3 }]}, this.entity);
+
 	return { "healthChange": this.hitpoints - oldHitpoints };
 };
 
@@ -76,13 +78,17 @@ Health.prototype.Increase = function(amount)
 	this.RegisterHealthChanged(old);
 
 	// Morale modifiers, units above 1/2 of their max hp will get their penalties removed
-	let cmpHealth = QueryMiragedInterface(this.entity, IID_Health);
+	let cmpHealth = QueryMiragedInterface(this.entity, IID_Health);		
+	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
+
 	let currentHp = cmpHealth.GetHitpoints();
-	let treshold = cmpHealth.GetMaxHitpoints() / 2; 
-	if( currentHp > treshold ) {
-		var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-		cmpModifiersManager.RemoveAllModifiers("CriticallyWounded", this.entity);
-	}
+	let maxHp = cmpHealth.GetMaxHitpoints()
+	let threshold =  maxHp / 2;  
+	if( currentHp = maxHp ) 
+		cmpModifiersManager.RemoveAllModifiers("InjuredMorale", this.entity);
+	if( currentHp > treshold )
+		cmpModifiersManager.RemoveAllModifiers("BadlyWoundedMorale", this.entity);
+	
 	return { "old": old, "new": this.hitpoints };
 
 };

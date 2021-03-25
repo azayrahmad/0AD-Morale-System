@@ -222,11 +222,11 @@ Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 	{
 		var cmpMorale = Engine.QueryInterface(ent, IID_Morale);
 		cmpModifiersManager.AddModifiers(
-			ally ? "MoraleAllies" : "MoraleEnemies", 
+			(ally ? "MoraleAllies" : "MoraleEnemies") + ent, 
 			{
-				"Morale/RegenRate": [{ "affects": ["Unit"], "add": moraleInfluence }],
+				"Morale/RegenRate": [{ "affects": ["Unit"], "add": moraleInfluence * (cmpMorale.GetMoraleLevel() / 5) }],
 			},
-			ent,
+			this.entity,
 			true
 		);
 	}
@@ -258,7 +258,7 @@ Morale.prototype.RemoveMoraleInfluence = function(ents, ally)
 	for (let ent of ents)
 	{
 		var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-		cmpModifiersManager.RemoveAllModifiers(ally ? "MoraleAllies" : "MoraleEnemies", ent);
+		cmpModifiersManager.RemoveAllModifiers((ally ? "MoraleAllies" : "MoraleEnemies") + ent, this.entity);
 	}
 
 }
@@ -271,11 +271,15 @@ Morale.prototype.CleanMoraleInfluence = function()
 		this.RemoveMoraleInfluence(this.affectedPlayers, true);
 	if(this.affectedPlayersEnemies)
 		this.RemoveMoraleInfluence(this.affectedPlayersEnemies, false);
+    this.RemoveMoraleInfluence([this.entity], false);
 
 	if (this.rangeQuery)
 		cmpRangeManager.DestroyActiveQuery(this.rangeQuery);
 	if (this.rangeQueryEnemy)
 		cmpRangeManager.DestroyActiveQuery(this.rangeQueryEnemy);
+
+	this.rangeQuery = undefined;
+	this.rangeQueryEnemy = undefined;
 
 	var cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
 	if (!cmpPlayer)
@@ -345,6 +349,12 @@ Morale.prototype.OnDiplomacyChanged = function(msg)
 	   IsOwnedByPlayer(msg.otherPlayer, this.entity))
 		this.CleanMoraleInfluence();
 };
+
+Morale.prototype.OnDestroy = function(msg)
+{
+	this.CleanMoraleInfluence();
+};
+
 
 Morale.prototype.OnGlobalPlayerDefeated = function(msg)
 {
