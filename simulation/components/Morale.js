@@ -224,7 +224,7 @@ Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 		cmpModifiersManager.AddModifiers(
 			(ally ? "MoraleAllies" : "MoraleEnemies") + ent, 
 			{
-				"Morale/RegenRate": [{ "affects": ["Unit"], "add": moraleInfluence }],
+				"Morale/RegenRate": [{ "affects": ["Unit"], "add": moraleInfluence * (cmpMorale ? cmpMorale.GetMoraleLevel() / 5 : 1) }],
 			},
 			this.entity,
 			true
