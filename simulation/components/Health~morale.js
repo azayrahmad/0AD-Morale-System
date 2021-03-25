@@ -86,7 +86,7 @@ Health.prototype.Increase = function(amount)
 	let threshold =  maxHp / 2;  
 	if( currentHp = maxHp ) 
 		cmpModifiersManager.RemoveAllModifiers("InjuredMorale", this.entity);
-	if( currentHp > treshold )
+	if( currentHp > threshold )
 		cmpModifiersManager.RemoveAllModifiers("BadlyWoundedMorale", this.entity);
 	
 	return { "old": old, "new": this.hitpoints };
