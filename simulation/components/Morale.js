@@ -8,11 +8,16 @@ Morale.prototype.Schema =
 		"<IdleRegenRate>0</IdleRegenRate>" +
 		"<Range>10</Range>" +
 	"</a:example>" +
-	"<element name='Max' a:help='Maximum Morale'>" +
+	"<element name='Max' a:help='Maximum Morale.'>" +
 		"<ref name='nonNegativeDecimal'/>" +
 	"</element>" +
 	"<optional>" +
-		"<element name='Initial' a:help='Initial Morale. Default if unspecified is equal to Max'>" +
+		"<element name='Initial' a:help='Initial Morale. Default if unspecified is equal to Max.'>" +
+			"<ref name='nonNegativeDecimal'/>" +
+		"</element>" +
+	"</optional>" +
+	"<optional>" +
+		"<element name='Significance' a:help='The rate of unit morale influence to other units in range. Default to 1.'>" +
 			"<ref name='nonNegativeDecimal'/>" +
 		"</element>" +
 	"</optional>" +
@@ -37,6 +42,7 @@ Morale.prototype.Init = function()
 	this.Morale = +(this.template.Initial || this.GetMaxMorale());
 	this.regenRate = ApplyValueModificationsToEntity("Morale/RegenRate", +this.template.RegenRate, this.entity);
 	this.idleRegenRate = ApplyValueModificationsToEntity("Morale/IdleRegenRate", +this.template.IdleRegenRate, this.entity);
+	this.Significance = +(this.template.Significance || 1);
 
 	this.CheckMoraleRegenTimer();	
 	this.CleanMoraleInfluence();
@@ -72,6 +78,11 @@ Morale.prototype.GetIdleRegenRate = function()
 Morale.prototype.GetRegenRate = function()
 {
 	return this.regenRate;
+};
+
+Morale.prototype.GetSignificance = function()
+{
+	return this.Significance;
 };
 
 Morale.prototype.ExecuteRegeneration = function()
@@ -211,43 +222,24 @@ Morale.prototype.RemoveMoraleEffects = function(ents)
 // Applying morale influence by updating regenRate of all entities in range.
 Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 {
-	//Calculate morale influence
-	//TODO: multiply by Morale Level
-	let moraleInfluence =  (ally ? 1 : -1)
-	if (moraleInfluence == 0)
-		return;
 
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
 	for (let ent of ents)
 	{
 		var cmpMorale = Engine.QueryInterface(ent, IID_Morale);
-		cmpModifiersManager.AddModifiers(
-			(ally ? "MoraleAllies" : "MoraleEnemies") + ent, 
-			{
-				"Morale/RegenRate": [{ "affects": ["Unit"], "add": moraleInfluence * (cmpMorale ? cmpMorale.GetMoraleLevel() / 5 : 1) }],
-			},
-			this.entity,
-			true
-		);
-	}
-}
-
-//Alternative Morale Apply by updating unit regenRate based on amount entities in range. Not currently used
-Morale.prototype.ApplyMoraleInfluenceAlt = function(ents, ally)
-{
-	let moraleInfluence =  (ally ? 1 : -1)
-	if (moraleInfluence == 0)
-		return;
-
-	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-
-	if (ents)
-	{
-		let oldRegenRate = this.regenRate
-		this.regenRate = +this.template.RegenRate + (moraleInfluence * ents.length);
-		if (oldRegenRate != this.regenRate )
-			this.CheckMoraleRegenTimer();
-
+		if (cmpMorale)
+		{
+			// Calculate Morale Influence (alliance, level, and significance)
+			let moraleInfluence =  (ally ? 1 : -1) * (cmpMorale.GetMoraleLevel() / 5) * cmpMorale.GetSignificance()
+			cmpModifiersManager.AddModifiers(
+				(ally ? "MoraleAllies" : "MoraleEnemies") + ent, 
+				{
+					"Morale/RegenRate": [{ "affects": ["Unit"], "add": moraleInfluence}],
+				},
+				this.entity,
+				true
+			);
+		}
 	}
 }
 
