@@ -49,6 +49,43 @@ Health.prototype.Reduce = function(amount)
 	return { "healthChange": this.hitpoints - oldHitpoints };
 };
 
+/**
+ * Handle what happens when the entity dies.
+ */
+Health.prototype.HandleDeath = function()
+{
+	let cmpDeathDamage = Engine.QueryInterface(this.entity, IID_DeathDamage);
+	if (cmpDeathDamage)
+		cmpDeathDamage.CauseDeathDamage();
+	let cmpMorale = Engine.QueryInterface(this.entity, IID_Morale);
+	if (cmpMorale)
+		cmpMorale.CauseMoraleDeathDamage()
+	
+	PlaySound("death", this.entity);
+
+	if (this.template.SpawnEntityOnDeath)
+		this.CreateDeathSpawnedEntity();
+
+	switch (this.template.DeathType)
+	{
+	case "corpse":
+		this.CreateCorpse();
+		break;
+
+	case "remain":
+		return;
+
+	case "vanish":
+		break;
+
+	default:
+		error("Invalid template.DeathType: " + this.template.DeathType);
+		break;
+	}
+
+	Engine.DestroyEntity(this.entity);
+};
+
 Health.prototype.Increase = function(amount)
 {
 	// Before changing the value, activate Fogging if necessary to hide changes
