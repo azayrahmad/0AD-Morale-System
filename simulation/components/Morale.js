@@ -40,6 +40,7 @@ Morale.prototype.Init = function()
 	this.maxMorale = +this.template.Max;
 	// Default to <Initial>, but use <Max> if it's undefined or zero
 	this.Morale = +(this.template.Initial || this.GetMaxMorale());
+
 	this.regenRate = ApplyValueModificationsToEntity("Morale/RegenRate", +this.template.RegenRate, this.entity);
 	this.idleRegenRate = ApplyValueModificationsToEntity("Morale/IdleRegenRate", +this.template.IdleRegenRate, this.entity);
 	this.Significance = +(this.template.Significance || 1);
@@ -219,6 +220,22 @@ Morale.prototype.RemoveMoraleEffects = function(ents)
 //
 // For Morale Influence
 //
+
+// Calculate Morale Influence (alliance, level, and significance)
+Morale.prototype.CalculateMoraleInfluence = function(ent, ally)
+{
+	var cmpMorale = Engine.QueryInterface(ent, IID_Morale);
+	if (cmpMorale)
+	{
+		let alliance = ally ? 1 : -1
+		let moralePercentage = cmpMorale.GetMoraleLevel() / 5
+		let moraleSignificance = cmpMorale.GetSignificance()
+		let moraleMultiplier = 0.5 //make morale regen slower
+
+		return alliance * moralePercentage * moraleSignificance * moraleMultiplier;
+	}
+}
+
 // Applying morale influence by updating regenRate of all entities in range.
 Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 {
@@ -226,11 +243,9 @@ Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
 	for (let ent of ents)
 	{
-		var cmpMorale = Engine.QueryInterface(ent, IID_Morale);
-		if (cmpMorale)
+		let moraleInfluence = this.CalculateMoraleInfluence(ent, ally)
+		if (moraleInfluence)
 		{
-			// Calculate Morale Influence (alliance, level, and significance)
-			let moraleInfluence =  (ally ? 1 : -1) * (cmpMorale.GetMoraleLevel() / 5) * cmpMorale.GetSignificance()
 			cmpModifiersManager.AddModifiers(
 				(ally ? "MoraleAllies" : "MoraleEnemies") + ent, 
 				{

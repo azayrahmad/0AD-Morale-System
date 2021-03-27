@@ -285,6 +285,7 @@ GuiInterface.prototype.GetEntityState = function(player, ent)
 	{
 		ret.morale = cmpMorale.GetMorale();
 		ret.maxMorale = cmpMorale.GetMaxMorale();
+		ret.regenRate = cmpMorale.GetRegenRate();
 	}
 
 	let cmpCapturable = QueryMiragedInterface(ent, IID_Capturable);

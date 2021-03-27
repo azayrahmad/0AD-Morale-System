@@ -44,9 +44,7 @@ Health.prototype.Reduce = function(amount)
 	let maxHp = cmpHealth.GetMaxHitpoints()
 	let threshold =  maxHp / 2; 
 	if (currentHp <= threshold ) 
-		cmpModifiersManager.AddModifiers("BadlyWoundedMorale", {"Morale/RegenRate": [{ "affects": ["Unit"], "add": -5 }]}, this.entity);
-	else if (currentHp < maxHp)
-		cmpModifiersManager.AddModifiers("InjuredMorale", {"Morale/RegenRate": [{ "affects": ["Unit"], "add": -3 }]}, this.entity);
+		cmpModifiersManager.AddModifiers("BadlyWoundedMorale", {"Morale/RegenRate": [{ "affects": ["Unit"], "add": -1 }]}, this.entity);
 
 	return { "healthChange": this.hitpoints - oldHitpoints };
 };
@@ -83,9 +81,7 @@ Health.prototype.Increase = function(amount)
 
 	let currentHp = cmpHealth.GetHitpoints();
 	let maxHp = cmpHealth.GetMaxHitpoints()
-	let threshold =  maxHp / 2;  
-	if( currentHp = maxHp ) 
-		cmpModifiersManager.RemoveAllModifiers("InjuredMorale", this.entity);
+	let threshold =  maxHp / 2;
 	if( currentHp > threshold )
 		cmpModifiersManager.RemoveAllModifiers("BadlyWoundedMorale", this.entity);
 	

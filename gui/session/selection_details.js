@@ -151,18 +151,16 @@ function displaySingle(entState)
 		resourceSection.size = showResource ? sectionPosBottom.size : sectionPosMiddle.size;
 
 		// Morale
-		moraleSection.hidden = !showMorale;
-		if (showMorale)
-		{
-			let unitMoraleBar = Engine.GetGUIObjectByName("moraleBar");
-			let moraleSize = unitMoraleBar.size;
-			moraleSize.rright = 100 * Math.max(0, Math.min(1, entState.morale / entState.maxMorale));
-			unitMoraleBar.size = moraleSize;
-			Engine.GetGUIObjectByName("moraleStats").caption = sprintf(translate("%(morale)s / %(maxMorale)s"), {
-				"morale": Math.ceil(entState.morale),
-				"maxMorale": Math.ceil(entState.maxMorale)
-			});
-		}
+		let unitMoraleBar = Engine.GetGUIObjectByName("moraleBar");
+		let moraleSize = unitMoraleBar.size;
+		moraleSize.rright = 100 * Math.max(0, Math.min(1, entState.morale / entState.maxMorale));
+		unitMoraleBar.size = moraleSize;
+		Engine.GetGUIObjectByName("moraleStats").caption = sprintf(translate("%(morale)s / %(maxMorale)s (%(positive)s%(regenRate)s)"), {
+			"morale": Math.ceil(entState.morale),
+			"maxMorale": Math.ceil(entState.maxMorale),
+			"positive" : entState.regenRate > 0 ? "+" : "",
+			"regenRate" : Math.round(entState.regenRate * 10) / 10
+		});
 	}
 	else if (showResource)
 	{
