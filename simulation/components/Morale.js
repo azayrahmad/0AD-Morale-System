@@ -218,7 +218,6 @@ Morale.prototype.ApplyMoraleEffects = function(ent)
 	cmpModifiersManager.AddModifiers(
 		"Demoralized", 
 		{
-			"UnitMotion/WalkSpeed": [{ "affects": ["Unit"], "multiply": 0.75 }],
 			"Attack/Melee/RepeatTime": [{ "affects": ["Unit"], "multiply": 1.25 }],
 			"Attack/Ranged/RepeatTime": [{ "affects": ["Unit"], "multiply": 1.25 }],
 			"Builder/Rate": [{ "affects": ["Unit"], "multiply": 0.75 }],
@@ -226,6 +225,10 @@ Morale.prototype.ApplyMoraleEffects = function(ent)
 		},
 		ent
 	);
+
+	let cmpUnitAI = Engine.QueryInterface(ent, IID_UnitAI);
+	if(cmpUnitAI.order)
+		cmpUnitAI.SetNextState("INDIVIDUAL.FLEEING")
 }
 
 Morale.prototype.RemoveMoraleEffects = function(ents)
