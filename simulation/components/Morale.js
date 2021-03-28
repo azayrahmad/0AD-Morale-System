@@ -47,10 +47,14 @@ Morale.prototype.Init = function()
 	this.idleRegenRate = ApplyValueModificationsToEntity("Morale/IdleRegenRate", +this.template.IdleRegenRate, this.entity);
 	this.significance = +(this.template.Significance || 1);
 
+	//TODO: Make these customizable in template
 	this.moraleRegenMultiplier = 0.2; // Morale influence regen multiplier
 	this.moraleDeathDamageMultiplier = 100; // Morale damage on death (multiplied from morale influence)
 	this.moraleDamageAttacked = 0.5; //Morale damage on attacked
 	this.moraleLevelEffectThreshold = 2; // Morale level on which Demoralized effect is applied
+
+	this.penaltyRateWorker = 0.75 // Building and gathering speed rate penalty on low morale
+	this.penaltyRateAttack = 1.25 // Attack repeat time penalty on low morale
 
 	this.CheckMoraleRegenTimer();	
 	this.CleanMoraleInfluence();
@@ -123,6 +127,8 @@ Morale.prototype.ExecuteRegeneration = function()
 
 	let moraleLevel = this.GetMoraleLevel()
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
+
+	//TODO: Expand this for each morale level
     if (moraleLevel <= this.moraleLevelEffectThreshold)
 		this.ApplyMoraleEffects(this.entity)
     else
@@ -214,14 +220,13 @@ Morale.prototype.RecalculateMoraleValues = function()
 Morale.prototype.ApplyMoraleEffects = function(ent)
 {
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-	//TODO: Make this modifiable via template
 	cmpModifiersManager.AddModifiers(
 		"Demoralized", 
 		{
-			"Attack/Melee/RepeatTime": [{ "affects": ["Unit"], "multiply": 1.25 }],
-			"Attack/Ranged/RepeatTime": [{ "affects": ["Unit"], "multiply": 1.25 }],
-			"Builder/Rate": [{ "affects": ["Unit"], "multiply": 0.75 }],
-			"ResourceGatherer/BaseSpeed": [{ "affects": ["Unit"], "multiply": 0.75 }]
+			"Attack/Melee/RepeatTime": [{ "affects": ["Unit"], "multiply": this.penaltyRateAttack }],
+			"Attack/Ranged/RepeatTime": [{ "affects": ["Unit"], "multiply": this.penaltyRateAttack }],
+			"Builder/Rate": [{ "affects": ["Unit"], "multiply": this.penaltyRateWorker }],
+			"ResourceGatherer/BaseSpeed": [{ "affects": ["Unit"], "multiply": this.penaltyRateWorker }]
 		},
 		ent
 	);
