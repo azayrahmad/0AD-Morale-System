@@ -228,15 +228,24 @@ Morale.prototype.ApplyMoraleEffects = function(ent)
 
 	let cmpUnitAI = Engine.QueryInterface(ent, IID_UnitAI);
 	if(cmpUnitAI.order)
-		cmpUnitAI.SetNextState("INDIVIDUAL.FLEEING")
+	{
+		cmpUnitAI.Flee(ent, false)
+		cmpUnitAI.SetStance("passive")
+	}
 }
 
-Morale.prototype.RemoveMoraleEffects = function(ents)
+Morale.prototype.RemoveMoraleEffects = function(ent)
 {
-	if (!ents.length)
+	if (!ent.length)
 		return;
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-	cmpModifiersManager.RemoveAllModifiers("Demoralized", ents);
+	cmpModifiersManager.RemoveAllModifiers("Demoralized", ent);
+
+	let cmpUnitAI = Engine.QueryInterface(ent, IID_UnitAI);
+	if(cmpUnitAI.order)
+	{		
+		cmpUnitAI.SetStance(cmpUnitAI.template.DefaultStance)
+	}
 }
 
 //
