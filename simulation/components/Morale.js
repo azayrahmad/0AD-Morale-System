@@ -55,6 +55,8 @@ Morale.prototype.Init = function()
 
 	this.penaltyRateWorker = 0.75 // Building and gathering speed rate penalty on low morale
 	this.penaltyRateAttack = 1.25 // Attack repeat time penalty on low morale
+	this.bonusRateWorker = 1.25 // Building and gathering speed rate bonus on high morale
+	this.bonusRateAttack = 0.75 // Attack repeat time bonus on high morale
 
 	this.CheckMoraleRegenTimer();	
 	this.CleanMoraleInfluence();
@@ -128,11 +130,6 @@ Morale.prototype.ExecuteRegeneration = function()
 	let moraleLevel = this.GetMoraleLevel()
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
 
-	//TODO: Expand this for each morale level
-    if (moraleLevel <= this.moraleLevelEffectThreshold)
-		this.ApplyMoraleEffects(this.entity)
-    else
-    	this.RemoveMoraleEffects(this.entity)	
 };
 
 /*
@@ -182,6 +179,7 @@ Morale.prototype.ReduceMorale = function(amount)
 
 	this.Morale -= amount;
 	this.RegisterMoraleChanged(oldMorale);
+	this.ApplyMoraleEffects();
 	return { "MoraleChange": this.Morale - oldMorale };
 };
 
@@ -192,7 +190,7 @@ Morale.prototype.IncreaseMorale = function(amount)
 	this.Morale = Math.min(this.Morale + amount, this.GetMaxMorale());
 
 	this.RegisterMoraleChanged(old);
-
+	this.ApplyMoraleEffects()
 	return { "old": old, "new": this.Morale };
 };
 
@@ -217,40 +215,57 @@ Morale.prototype.RecalculateMoraleValues = function()
 		this.CheckMoraleRegenTimer();
 };
 
-Morale.prototype.ApplyMoraleEffects = function(ent)
-{
-	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-	cmpModifiersManager.AddModifiers(
-		"Demoralized", 
-		{
-			"Attack/Melee/RepeatTime": [{ "affects": ["Unit"], "multiply": this.penaltyRateAttack }],
-			"Attack/Ranged/RepeatTime": [{ "affects": ["Unit"], "multiply": this.penaltyRateAttack }],
-			"Builder/Rate": [{ "affects": ["Unit"], "multiply": this.penaltyRateWorker }],
-			"ResourceGatherer/BaseSpeed": [{ "affects": ["Unit"], "multiply": this.penaltyRateWorker }]
-		},
-		ent
-	);
+Morale.prototype.ApplyMoraleEffects = function()
+{ 
+	var highMoraleModifierName = "HighMorale";
+	var lowMoraleModifierName = "Demoralized";
 
-	let cmpUnitAI = Engine.QueryInterface(ent, IID_UnitAI);
-	if(cmpUnitAI.order)
+	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
+	var cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
+	var moraleLevel = this.GetMoraleLevel();
+
+	// High morale effects
+	if (moraleLevel >= 4)
 	{
-		cmpUnitAI.Flee(ent, false)
+		cmpModifiersManager.AddModifiers(
+				highMoraleModifierName, 
+				{
+					"Attack/Melee/RepeatTime": [{ "affects": ["Unit"], "multiply": this.bonusRateAttack }],
+					"Attack/Ranged/RepeatTime": [{ "affects": ["Unit"], "multiply": this.bonusRateAttack }],
+					"Builder/Rate": [{ "affects": ["Unit"], "multiply": this.bonusRateWorker }],
+					"ResourceGatherer/BaseSpeed": [{ "affects": ["Unit"], "multiply": this.bonusRateWorker }]
+				},
+				this.entity
+		);
+	}
+	else
+		cmpModifiersManager.RemoveAllModifiers(highMoraleModifierName, this.entity);
+
+	//Low morale effects
+	if (moraleLevel <= 2)
+	{
+		cmpModifiersManager.AddModifiers(
+			lowMoraleModifierName, 
+			{
+				"Attack/Melee/RepeatTime": [{ "affects": ["Unit"], "multiply": this.penaltyRateAttack }],
+				"Attack/Ranged/RepeatTime": [{ "affects": ["Unit"], "multiply": this.penaltyRateAttack }],
+				"Builder/Rate": [{ "affects": ["Unit"], "multiply": this.penaltyRateWorker }],
+				"ResourceGatherer/BaseSpeed": [{ "affects": ["Unit"], "multiply": this.penaltyRateWorker }]
+			},
+			this.entity
+		);
+	}
+	else
+		cmpModifiersManager.RemoveAllModifiers(lowMoraleModifierName, this.entity);
+
+	// Very low morale effects
+	if (moraleLevel <= 1 && cmpUnitAI.order)
+	{
+		cmpUnitAI.Flee(this.entity, false)
 		cmpUnitAI.SetStance("passive")
 	}
-}
-
-Morale.prototype.RemoveMoraleEffects = function(ent)
-{
-	if (!ent.length)
-		return;
-	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-	cmpModifiersManager.RemoveAllModifiers("Demoralized", ent);
-
-	let cmpUnitAI = Engine.QueryInterface(ent, IID_UnitAI);
-	if(cmpUnitAI.order)
-	{		
-		cmpUnitAI.SetStance(cmpUnitAI.template.DefaultStance)
-	}
+	else
+		cmpUnitAI.SetStance(cmpUnitAI.template.DefaultStance);
 }
 
 //
