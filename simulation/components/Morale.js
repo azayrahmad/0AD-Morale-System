@@ -49,7 +49,7 @@ Morale.prototype.Init = function()
 
 	//TODO: Make these customizable in template
 	this.moraleRegenMultiplier = 0.2; // Morale influence regen multiplier
-	this.moraleDeathDamageMultiplier = 100; // Morale damage on death (multiplied from morale influence)
+	this.moraleDeathDamageMultiplier = 100; // Morale damage on death 
 	this.moraleDamageAttacked = 0.5; //Morale damage on attacked
 	this.moraleLevelEffectThreshold = 2; // Morale level on which Demoralized effect is applied
 
@@ -69,7 +69,7 @@ Morale.prototype.GetMorale = function()
 
 Morale.prototype.GetMoraleLevel = function()
 {
-	return this.Morale == 0 ? 1 : Math.ceil(this.Morale / 20);
+	return this.Morale == 0 ? 1 : Math.ceil(5 * this.Morale / this.maxMorale);
 };
 
 Morale.prototype.GetMaxMorale = function()
@@ -169,6 +169,7 @@ Morale.prototype.ReduceMorale = function(amount)
 		return { "MoraleChange": 0 };
 
 	let oldMorale = this.Morale;
+	let oldMoraleLevel = this.GetMoraleLevel();
 	// If we reached 0, then stop reducing.
 	if (amount >= this.Morale)
 	{
@@ -179,7 +180,8 @@ Morale.prototype.ReduceMorale = function(amount)
 
 	this.Morale -= amount;
 	this.RegisterMoraleChanged(oldMorale);
-	this.ApplyMoraleEffects();
+	if (this.GetMoraleLevel() != oldMoraleLevel)
+		this.ApplyMoraleEffects();
 	return { "MoraleChange": this.Morale - oldMorale };
 };
 
@@ -187,10 +189,13 @@ Morale.prototype.ReduceMorale = function(amount)
 Morale.prototype.IncreaseMorale = function(amount)
 {
 	let old = this.Morale;
+	let oldMoraleLevel = this.GetMoraleLevel();
+
 	this.Morale = Math.min(this.Morale + amount, this.GetMaxMorale());
 
 	this.RegisterMoraleChanged(old);
-	this.ApplyMoraleEffects()
+	if (this.GetMoraleLevel() != oldMoraleLevel)
+		this.ApplyMoraleEffects();
 	return { "old": old, "new": this.Morale };
 };
 
@@ -221,7 +226,6 @@ Morale.prototype.ApplyMoraleEffects = function()
 	var lowMoraleModifierName = "Demoralized";
 
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-	var cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
 	var moraleLevel = this.GetMoraleLevel();
 
 	// High morale effects
@@ -258,15 +262,33 @@ Morale.prototype.ApplyMoraleEffects = function()
 	else
 		cmpModifiersManager.RemoveAllModifiers(lowMoraleModifierName, this.entity);
 
-	// Very low morale effects
-	if (moraleLevel <= 1 && cmpUnitAI.order)
+	this.ChangeStance(this.entity, moraleLevel);
+
+}
+
+//Change unit stance based on morale level
+Morale.prototype.ChangeStance = function(entity, moraleLevel)
+{
+	var cmpUnitAI = Engine.QueryInterface(entity, IID_UnitAI);
+
+	if (moraleLevel === 1)
 	{
-		cmpUnitAI.Flee(this.entity, false)
+		cmpUnitAI.AddOrder("Flee", { "target": this.entity, "force": true }, false);
 		cmpUnitAI.SetStance("passive")
 	}
+	else if (moraleLevel === 5)
+	{
+		cmpUnitAI.Cheer();
+		cmpUnitAI.SetStance("violent")
+	}
 	else
+	{
+		if(cmpUnitAI.order && cmpUnitAI.order.type === "Flee")
+			cmpUnitAI.StopMoving();
 		cmpUnitAI.SetStance(cmpUnitAI.template.DefaultStance);
+	}
 }
+
 
 //
 // For Morale Influence
@@ -373,10 +395,13 @@ Morale.prototype.CleanMoraleInfluence = function()
 }
 
 // 
-Morale.prototype.CauseMoraleDeathDamage = function()
+Morale.prototype.CauseMoraleInstantInfluence = function(event)
 {
 	let damageMultiplier = 1; 
-	let moraleRange = this.GetRange(this.entity)
+	let moraleRange = this.GetRange(this.entity);
+	let instantInfluenceMultiplier = 1;
+	if (event == "death")
+		instantInfluenceMultiplier = this.moraleDeathDamageMultiplier;
 
 	let cmpPosition = Engine.QueryInterface(this.entity, IID_Position);
 	if (!cmpPosition || !cmpPosition.IsInWorld())
@@ -394,19 +419,12 @@ Morale.prototype.CauseMoraleDeathDamage = function()
 		QueryPlayerIDInterface(owner).GetEnemies());
 
 	let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
-
-	// Cycle through all the nearby entities and damage it appropriately based on its distance from the origin.
+	var moraleDamage = this.CalculateMoraleInfluence(this.entity, true) * instantInfluenceMultiplier;
 	for (let ent of nearEntsAllies)
 	{
-		let moraleDamage = this.CalculateMoraleInfluence(this.entity, true) * this.moraleDeathDamageMultiplier
-
-		// Correct somewhat for the entity's obstruction radius.
 		let distance = cmpObstructionManager.DistanceToPoint(ent, pos.x, pos.y);
 
 		damageMultiplier = 1 - distance * distance / (moraleRange * moraleRange);
-
-		// The RangeManager can return units that are too far away (due to approximations there)
-		// so the multiplier can end up below 0.
 		damageMultiplier = Math.max(0, damageMultiplier);
 
 		let cmpMorale = Engine.QueryInterface(ent, IID_Morale);
@@ -416,7 +434,6 @@ Morale.prototype.CauseMoraleDeathDamage = function()
 
 	for (let ent of nearEntsEnemies)
 	{
-		let moraleDamage = this.CalculateMoraleInfluence(this.entity, true) * this.moraleDeathDamageMultiplier
 		let distance = cmpObstructionManager.DistanceToPoint(ent, pos.x, pos.y);
 
 		damageMultiplier = 1 - distance * distance / (moraleRange * moraleRange);
