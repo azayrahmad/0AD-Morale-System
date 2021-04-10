@@ -381,6 +381,8 @@ function displayMultiple(entStates)
 {
 	let averageHealth = 0;
 	let maxHealth = 0;
+	let averageMorale = 0;
+	let maxMorale = 0;
 	let maxCapturePoints = 0;
 	let capturePoints = (new Array(g_MaxPlayers + 1)).fill(0);
 	let playerID = 0;
@@ -394,6 +396,11 @@ function displayMultiple(entStates)
 		{
 			averageHealth += entState.hitpoints;
 			maxHealth += entState.maxHitpoints;
+		}
+		if (entState.morale)
+		{
+			averageMorale += entState.morale;
+			maxMorale += entState.maxMorale;
 		}
 		if (entState.capturePoints)
 		{
@@ -428,6 +435,20 @@ function displayMultiple(entStates)
 		Engine.GetGUIObjectByName("healthMultiple").tooltip = getCurrentHealthTooltip({
 			"hitpoints": averageHealth,
 			"maxHitpoints": maxHealth
+		});
+	}
+
+	Engine.GetGUIObjectByName("moraleMultiple").hidden = averageMorale < 0;
+	if (averageMorale > 0)
+	{
+		let unitMoraleBar = Engine.GetGUIObjectByName("moraleBarMultiple");
+		let moraleSize = unitMoraleBar.size;
+		moraleSize.rtop = 100 - 100 * Math.max(0, Math.min(1, averageMorale / maxMorale));
+		unitMoraleBar.size = moraleSize;
+
+		Engine.GetGUIObjectByName("moraleMultiple").tooltip = getCurrentMoraleTooltip({
+			"morale": averageMorale,
+			"maxMorale": maxMorale
 		});
 	}
 
