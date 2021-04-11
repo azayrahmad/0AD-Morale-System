@@ -397,7 +397,7 @@ function displayMultiple(entStates)
 			averageHealth += entState.hitpoints;
 			maxHealth += entState.maxHitpoints;
 		}
-		if (entState.morale)
+		if (entState.morale || entState.morale == 0)
 		{
 			averageMorale += entState.morale;
 			maxMorale += entState.maxMorale;
@@ -439,7 +439,7 @@ function displayMultiple(entStates)
 	}
 
 	Engine.GetGUIObjectByName("moraleMultiple").hidden = averageMorale < 0;
-	if (averageMorale > 0)
+	if (averageMorale >= 0)
 	{
 		let unitMoraleBar = Engine.GetGUIObjectByName("moraleBarMultiple");
 		let moraleSize = unitMoraleBar.size;
