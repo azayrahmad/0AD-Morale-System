@@ -284,7 +284,7 @@ Morale.prototype.ChangeStance = function(entity, moraleLevel)
 	{
 		if (moraleLevel === 1)
 		{
-			cmpUnitAI.AddOrder("Flee", { "target": this.entity, "force": true }, false);
+			//cmpUnitAI.AddOrder("Flee", { "target": this.entity, "force": true }, false);
 			cmpUnitAI.SetStance("passive");
 		}
 		else if (moraleLevel === 5)
@@ -302,7 +302,6 @@ Morale.prototype.ChangeStance = function(entity, moraleLevel)
 		}
 	}
 }
-
 
 //
 // For Morale Influence
@@ -325,7 +324,7 @@ Morale.prototype.CalculateMoraleInfluence = function(ent, ally)
 // Applying morale influence by updating regenRate of all entities in range.
 Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 {
-
+	var cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
 	for (let ent of ents)
 	{
@@ -342,6 +341,14 @@ Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 				true
 			);
 		}
+	}
+
+	if (cmpUnitAI && this.GetMoraleLevel() === 1)
+	{
+		//cmpUnitAI.Flee(ents[0], false);
+		//cmpUnitAI.PushOrderFront("Flee", { "target": ents[0], "force": false });
+		cmpUnitAI.AddOrder("Flee", { "target": ents[0], "force": true }, false);
+
 	}
 }
 
@@ -503,6 +510,21 @@ Morale.prototype.OnDestroy = function(msg)
 	this.CleanMoraleInfluence();
 };
 
+Morale.prototype.OnAttacked = function(msg)
+{
+	if (msg.fromStatusEffect)
+		return;
+
+	var cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
+	if (cmpUnitAI)
+	{
+		if (this.GetMoraleLevel() === 1 && msg.attacker)
+		{
+			//cmpUnitAI.PushOrderFront("Flee", { "target": msg.attacker, "force": false });
+			cmpUnitAI.AddOrder("Flee", { "target": msg.attacker, "force": true }, false);
+		}
+	}
+};
 
 Morale.prototype.OnGlobalPlayerDefeated = function(msg)
 {
