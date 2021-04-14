@@ -49,15 +49,16 @@ Morale.prototype.Init = function()
 	this.significance = +(this.template.Significance || 1);
 
 	//TODO: Make these customizable in template
-	this.moraleRegenMultiplier = 0.2; // Morale influence regen multiplier
-	this.moraleDeathDamageMultiplier = 0.5; // Morale damage on death multiplier
-	this.moraleDamageAttacked = 0.5; //Morale damage on attacked
+	this.moraleRegenTime = 2000; // Morale influence regen time interval
+	this.moraleRegenMultiplier = 0.1; // Morale influence regen multiplier
+	this.moraleDeathDamageMultiplier = 0.3; // Morale damage on death multiplier
+	this.moraleDamageAttacked = 0.2; //Morale damage on attacked
 	this.moraleLevelEffectThreshold = 2; // Morale level on which Demoralized effect is applied
 
-	this.penaltyRateWorker = 0.75 // Building and gathering speed rate penalty on low morale
-	this.penaltyRateAttack = 1.25 // Attack repeat time penalty on low morale
-	this.bonusRateWorker = 1.25 // Building and gathering speed rate bonus on high morale
-	this.bonusRateAttack = 0.75 // Attack repeat time bonus on high morale
+	this.penaltyRateWorker = 0.8 // Building and gathering speed rate penalty on low morale
+	this.penaltyRateAttack = 1.1 // Attack repeat time penalty on low morale
+	this.bonusRateWorker = 1.1 // Building and gathering speed rate bonus on high morale
+	this.bonusRateAttack = 0.8 // Attack repeat time bonus on high morale
 
 	this.CheckMoraleRegenTimer();	
 	this.CleanMoraleInfluence();
@@ -71,6 +72,11 @@ Morale.prototype.GetMorale = function()
 Morale.prototype.GetMoraleLevel = function()
 {
 	return this.Morale == 0 ? 1 : Math.ceil(5 * this.Morale / this.maxMorale);
+};
+
+Morale.prototype.IsMoraleLevelChanged = function(from)
+{
+	return from != this.GetMoraleLevel();
 };
 
 Morale.prototype.GetMaxMorale = function()
@@ -135,7 +141,6 @@ Morale.prototype.ExecuteRegeneration = function()
 		this.ReduceMorale(-regen);
 
 	let moraleLevel = this.GetMoraleLevel();
-	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
 };
 
 /*
@@ -162,7 +167,7 @@ Morale.prototype.CheckMoraleRegenTimer = function()
 		return;
 
 	let cmpTimer = Engine.QueryInterface(SYSTEM_ENTITY, IID_Timer);
-	this.regenTimer = cmpTimer.SetInterval(this.entity, IID_Morale, "ExecuteRegeneration", 1000, 1000, null);
+	this.regenTimer = cmpTimer.SetInterval(this.entity, IID_Morale, "ExecuteRegeneration", this.moraleRegenTime, this.moraleRegenTime, null);
 };
 
 /**
@@ -186,7 +191,7 @@ Morale.prototype.ReduceMorale = function(amount)
 
 	this.Morale -= amount;
 	this.RegisterMoraleChanged(oldMorale);
-	if (this.GetMoraleLevel() != oldMoraleLevel)
+	if (this.IsMoraleLevelChanged(oldMoraleLevel))
 		this.ApplyMoraleEffects();
 	return { "MoraleChange": this.Morale - oldMorale };
 };
@@ -200,7 +205,7 @@ Morale.prototype.IncreaseMorale = function(amount)
 	this.Morale = Math.min(this.Morale + amount, this.GetMaxMorale());
 
 	this.RegisterMoraleChanged(old);
-	if (this.GetMoraleLevel() != oldMoraleLevel)
+	if (this.IsMoraleLevelChanged(oldMoraleLevel))
 		this.ApplyMoraleEffects();
 	return { "old": old, "new": this.Morale };
 };
@@ -234,9 +239,12 @@ Morale.prototype.ApplyMoraleEffects = function()
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
 	var moraleLevel = this.GetMoraleLevel();
 
-	// High morale effects
+	cmpModifiersManager.RemoveAllModifiers(highMoraleModifierName, this.entity);
+	cmpModifiersManager.RemoveAllModifiers(lowMoraleModifierName, this.entity);
+
 	if (moraleLevel >= 4)
 	{
+		// High morale effects
 		cmpModifiersManager.AddModifiers(
 				highMoraleModifierName, 
 				{
@@ -250,12 +258,9 @@ Morale.prototype.ApplyMoraleEffects = function()
 				this.entity
 		);
 	}
-	else
-		cmpModifiersManager.RemoveAllModifiers(highMoraleModifierName, this.entity);
-
-	//Low morale effects
-	if (moraleLevel <= 2)
+	else if (moraleLevel <= 2)
 	{
+		// Low morale effects
 		cmpModifiersManager.AddModifiers(
 			lowMoraleModifierName, 
 			{
@@ -269,8 +274,6 @@ Morale.prototype.ApplyMoraleEffects = function()
 			this.entity
 		);
 	}
-	else
-		cmpModifiersManager.RemoveAllModifiers(lowMoraleModifierName, this.entity);
 
 	this.ChangeStance(this.entity, moraleLevel);
 
@@ -284,7 +287,6 @@ Morale.prototype.ChangeStance = function(entity, moraleLevel)
 	{
 		if (moraleLevel === 1)
 		{
-			//cmpUnitAI.AddOrder("Flee", { "target": this.entity, "force": true }, false);
 			cmpUnitAI.SetStance("passive");
 		}
 		else if (moraleLevel === 5)
@@ -345,7 +347,7 @@ Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 	if(!ally && this.GetMoraleLevel() === 1)
 	{
 		var cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
-		if (cmpUnitAI)
+		if (cmpUnitAI && !cmpUnitAI.IsFleeing())
 		{
 			cmpUnitAI.Flee(ents[0], true);
 		}
@@ -372,7 +374,6 @@ Morale.prototype.CleanMoraleInfluence = function()
 		this.RemoveMoraleInfluence(this.affectedPlayers, true);
 	if(this.affectedPlayersEnemies)
 		this.RemoveMoraleInfluence(this.affectedPlayersEnemies, false);
-    this.RemoveMoraleInfluence([this.entity], false);
 
 	if (this.rangeQuery)
 		cmpRangeManager.DestroyActiveQuery(this.rangeQuery);
@@ -389,11 +390,12 @@ Morale.prototype.CleanMoraleInfluence = function()
 	if (!cmpPlayer || cmpPlayer.GetState() == "defeated")
 		return;
 
+	let visionRange = this.GetVisionRange(this.entity)
 	this.affectedPlayers = cmpPlayer.GetAllies();
 	this.rangeQuery = cmpRangeManager.CreateActiveQuery(
 		this.entity,
 		0,
-		this.GetVisionRange(this.entity),
+		visionRange,
 		this.affectedPlayers,
 		IID_Identity,
 		cmpRangeManager.GetEntityFlagMask("normal"),
@@ -405,7 +407,7 @@ Morale.prototype.CleanMoraleInfluence = function()
 	this.rangeQueryEnemy = cmpRangeManager.CreateActiveQuery(
 		this.entity,
 		0,
-		this.GetVisionRange(this.entity),
+		visionRange,
 		this.affectedPlayersEnemies,
 		IID_Identity,
 		cmpRangeManager.GetEntityFlagMask("normal"),
@@ -442,8 +444,7 @@ Morale.prototype.CauseMoraleInstantInfluence = function(event)
 	{
 		let distance = cmpObstructionManager.DistanceToPoint(ent, pos.x, pos.y);
 
-		damageMultiplier = 1 - distance * distance / (moraleRange * moraleRange);
-		damageMultiplier = Math.max(0, damageMultiplier);
+		damageMultiplier = Math.max(0, 1 - distance * distance / (moraleRange * moraleRange));
 
 		let cmpMorale = Engine.QueryInterface(ent, IID_Morale);
 		if (cmpMorale)
@@ -454,8 +455,7 @@ Morale.prototype.CauseMoraleInstantInfluence = function(event)
 	{
 		let distance = cmpObstructionManager.DistanceToPoint(ent, pos.x, pos.y);
 
-		damageMultiplier = 1 - distance * distance / (moraleRange * moraleRange);
-		damageMultiplier = Math.max(0, damageMultiplier);
+		damageMultiplier = Math.max(0, 1 - distance * distance / (moraleRange * moraleRange));
 
 		let cmpMorale = Engine.QueryInterface(ent, IID_Morale);
 		if (cmpMorale)
@@ -517,8 +517,8 @@ Morale.prototype.OnAttacked = function(msg)
 
 	if (msg.attacker && this.GetMoraleLevel() === 1)
 	{
-		var cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
-		if (cmpUnitAI)
+		let cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
+		if (cmpUnitAI && !cmpUnitAI.IsFleeing())
 		{
 			cmpUnitAI.PushOrderFront("Flee", { "target": msg.attacker, "force": true });
 		}	
