@@ -60,7 +60,7 @@ Morale.prototype.Init = function()
 	this.bonusRateWorker = 1.1 // Building and gathering speed rate bonus on high morale
 	this.bonusRateAttack = 0.8 // Attack repeat time bonus on high morale
 
-	this.CheckMoraleRegenTimer();	
+	this.CheckMoraleRegenTimer();
 	this.CleanMoraleInfluence();
 };
 
@@ -232,7 +232,7 @@ Morale.prototype.RecalculateMoraleValues = function()
 };
 
 Morale.prototype.ApplyMoraleEffects = function()
-{ 
+{
 	var highMoraleModifierName = "HighMorale";
 	var lowMoraleModifierName = "Demoralized";
 
@@ -246,7 +246,7 @@ Morale.prototype.ApplyMoraleEffects = function()
 	{
 		// High morale effects
 		cmpModifiersManager.AddModifiers(
-				highMoraleModifierName, 
+				highMoraleModifierName,
 				{
 					"Attack/Melee/RepeatTime": [{ "affects": ["Unit"], "multiply": this.bonusRateAttack }],
 					"Attack/Ranged/RepeatTime": [{ "affects": ["Unit","Structure"], "multiply": this.bonusRateAttack }],
@@ -262,7 +262,7 @@ Morale.prototype.ApplyMoraleEffects = function()
 	{
 		// Low morale effects
 		cmpModifiersManager.AddModifiers(
-			lowMoraleModifierName, 
+			lowMoraleModifierName,
 			{
 				"Attack/Melee/RepeatTime": [{ "affects": ["Unit"], "multiply": this.penaltyRateAttack }],
 				"Attack/Ranged/RepeatTime": [{ "affects": ["Unit","Structure"], "multiply": this.penaltyRateAttack }],
@@ -333,7 +333,7 @@ Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 		if (moraleInfluence)
 		{
 			cmpModifiersManager.AddModifiers(
-				(ally ? "MoraleAllies" : "MoraleEnemies") + ent, 
+				(ally ? "MoraleAllies" : "MoraleEnemies") + ent,
 				{
 					"Morale/RegenRate": [{ "affects": ["Unit","Structure"], "add": moraleInfluence}],
 					"Morale/IdleRegenRate": [{ "affects": ["Unit","Structure"], "add": moraleInfluence}]
@@ -420,7 +420,7 @@ Morale.prototype.CleanMoraleInfluence = function()
 // Instant morale increase/damage to nearby units
 Morale.prototype.CauseMoraleInstantInfluence = function(event)
 {
-	let damageMultiplier = 1; 
+	let damageMultiplier = 1;
 	let moraleRange = this.GetVisionRange(this.entity);
 
 	let cmpPosition = Engine.QueryInterface(this.entity, IID_Position);
@@ -521,7 +521,7 @@ Morale.prototype.OnAttacked = function(msg)
 		if (cmpUnitAI && !cmpUnitAI.IsFleeing())
 		{
 			cmpUnitAI.PushOrderFront("Flee", { "target": msg.attacker, "force": true });
-		}	
+		}
 	}
 };
 
