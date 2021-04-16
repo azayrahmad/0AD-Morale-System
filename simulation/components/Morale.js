@@ -525,6 +525,31 @@ Morale.prototype.OnAttacked = function(msg)
 	}
 };
 
+Morale.prototype.OnHealthChanged = function(msg)
+{
+	let diff = msg.to - msg.from;
+	if (diff > 0)
+		this.IncreaseMorale(diff);
+	else
+		this.ReduceMorale(-diff);
+
+	let cmpHealth = QueryMiragedInterface(this.entity, IID_Health);
+	if (cmpHealth)
+	{
+		let cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
+		let currentHp = msg.to;
+		let threshold =  cmpHealth.GetMaxHitpoints() / 3;
+		if (currentHp <= threshold)
+		{
+			cmpModifiersManager.AddModifiers("BadlyWoundedMorale", {"Morale/RegenRate": [{ "affects": ["Unit"], "add": -1 }]}, this.entity);
+		}
+		else
+		{
+			cmpModifiersManager.RemoveAllModifiers("BadlyWoundedMorale", this.entity);
+		}
+	}
+};
+
 Morale.prototype.OnGlobalPlayerDefeated = function(msg)
 {
 	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
