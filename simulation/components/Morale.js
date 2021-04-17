@@ -344,7 +344,7 @@ Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 		}
 	}
 
-	if(!ally && this.GetMoraleLevel() === 1)
+	if(!ally && this.GetMorale() === 0)
 	{
 		var cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
 		if (cmpUnitAI && !cmpUnitAI.IsFleeing())
@@ -463,6 +463,39 @@ Morale.prototype.CauseMoraleInstantInfluence = function(event)
 	}
 };
 
+Morale.prototype.CalculateMoraleAttackBonus = function(target, attacker)
+{
+	let sideFlankBonus = 0.5;
+	let backFlankBonus = 1;
+	let backAngleToleration = 1.0;
+	let sideAngleToleration = 2.0;
+	let flankBonus = 0;
+
+	let cmpTargetPosition = Engine.QueryInterface(target, IID_Position);
+	let cmpAttackerPosition = Engine.QueryInterface(attacker, IID_Position);
+
+	if (!cmpAttackerPosition || !cmpAttackerPosition.IsInWorld())
+		return;
+	if (!cmpTargetPosition || !cmpTargetPosition.IsInWorld())
+		return;
+
+	let attackerRotation = cmpAttackerPosition.GetRotation().y;
+	let targetRotation = cmpTargetPosition.GetRotation().y;
+
+	let angleDiff = Math.abs((attackerRotation - targetRotation) % (2 * Math.PI));
+
+	if (angleDiff < backAngleToleration)
+	{
+		flankBonus = backFlankBonus;
+	}
+	else if (angleDiff < sideAngleToleration)
+	{
+		flankBonus = sideFlankBonus;
+	}
+
+	this.ReduceMorale(flankBonus);
+}
+
 Morale.prototype.OnRangeUpdate = function(msg)
 {
 	if (msg.tag == this.rangeQuery)
@@ -515,7 +548,7 @@ Morale.prototype.OnAttacked = function(msg)
 	if (msg.fromStatusEffect)
 		return;
 
-	if (msg.attacker && this.GetMoraleLevel() === 1)
+	if (msg.attacker && this.GetMorale() === 0)
 	{
 		let cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
 		if (cmpUnitAI && !cmpUnitAI.IsFleeing())

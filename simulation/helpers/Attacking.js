@@ -310,6 +310,10 @@ Attacking.prototype.HandleAttackEffects = function(target, attackType, attackDat
 
 	bonusMultiplier *= !attackData.Bonuses ? 1 : this.GetAttackBonus(attacker, target, attackType, attackData.Bonuses);
 
+	let cmpMorale = Engine.QueryInterface(target, IID_Morale);
+	if (cmpMorale)
+		cmpMorale.CalculateMoraleAttackBonus(target, attacker);
+
 	let targetState = {};
 	for (let receiver of g_AttackEffects.Receivers())
 	{

@@ -12,6 +12,7 @@ StatusBars.prototype.Sprites = [
 	"UpgradeBar",
 	"ResourceSupplyBar",
 	"CaptureBar",
+	"MoraleBar",
 	"HealthBar",
 	"AuraIcons",
 	"RankIcon",
@@ -42,7 +43,7 @@ StatusBars.prototype.AddMoraleIcon = function(cmpOverlayRenderer, yoffset)
 		return 0;
 
 	let cmpMorale = Engine.QueryInterface(this.entity, IID_Morale);
-	if (!cmpMorale || cmpMorale.GetMorale() < 0)
+	if (!cmpMorale || cmpMorale.GetMorale() > 0)
 		return 0;
 
 	let iconSize = +this.template.BarWidth / 2;
