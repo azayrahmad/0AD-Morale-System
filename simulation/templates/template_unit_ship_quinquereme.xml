@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Entity parent="template_unit_ship">
+  <Attack>
+    <Ranged>
+      <AttackName>Stone</AttackName>
+      <Damage>
+        <Hack>0</Hack>
+        <Pierce>0</Pierce>
+        <Crush>150</Crush>
+      </Damage>
+      <MaxRange>80</MaxRange>
+      <MinRange>40</MinRange>
+      <PrepareTime>2000</PrepareTime>
+      <RepeatTime>5000</RepeatTime>
+      <Delay>0</Delay>
+      <Projectile>
+        <Speed>40.0</Speed>
+        <Spread>6.0</Spread>
+        <Gravity>20.0</Gravity>
+        <FriendlyFire>false</FriendlyFire>
+        <LaunchPoint y="3"/>
+      </Projectile>
+      <PreferredClasses datatype="tokens">Ship Structure</PreferredClasses>
+    </Ranged>
+  </Attack>
+  <BuildingAI>
+    <DefaultArrowCount>1</DefaultArrowCount>
+    <MaxArrowCount>10</MaxArrowCount>
+    <GarrisonArrowMultiplier>1</GarrisonArrowMultiplier>
+    <GarrisonArrowClasses>StoneThrower</GarrisonArrowClasses>
+  </BuildingAI>
+  <Cost>
+    <Population>3</Population>
+    <BuildTime>30</BuildTime>
+    <Resources>
+      <wood>350</wood>
+      <metal>200</metal>
+      <stone>350</stone>
+    </Resources>
+  </Cost>
+  <GarrisonHolder>
+    <Max>50</Max>
+    <List datatype="tokens">Support Soldier Siege</List>
+  </GarrisonHolder>
+  <Health>
+    <Max>2000</Max>
+  </Health>
+  <Identity>
+    <GenericName>Heavy Warship</GenericName>
+    <Tooltip>Garrison units for transport and to increase firepower.</Tooltip>
+    <VisibleClasses datatype="tokens">Ranged Warship Quinquereme</VisibleClasses>
+    <RequiredTechnology>phase_city</RequiredTechnology>
+  </Identity>
+  <Loot>
+    <xp>150</xp>
+    <wood>40</wood>
+    <metal>30</metal>
+  </Loot>
+  <Morale>
+    <Max op="mul">40</Max>
+    <Initial op="mul">40</Initial>
+    <Significance op="mul">40</Significance>
+  </Morale>
+  <Position>
+    <TurnRate>2</TurnRate>
+  </Position>
+  <ResourceGatherer disable=""/>
+  <Sound>
+    <SoundGroups>
+      <attack_ranged>attack/siege/ballist_attack.xml</attack_ranged>
+    </SoundGroups>
+  </Sound>
+  <UnitMotion>
+    <WalkSpeed op="mul">1.8</WalkSpeed>
+  </UnitMotion>
+  <Vision>
+    <Range>110</Range>
+  </Vision>
+</Entity>

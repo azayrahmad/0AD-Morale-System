@@ -57,6 +57,7 @@
     <Initial>50</Initial>
     <RegenRate>0</RegenRate>
     <IdleRegenRate>0</IdleRegenRate>
+    <Significance>1</Significance>
   </Morale>
   <Obstruction>
     <Unit/>
