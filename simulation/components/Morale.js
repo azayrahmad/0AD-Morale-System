@@ -49,14 +49,15 @@ Morale.prototype.Init = function()
 	this.significance = +(this.template.Significance || 1);
 
 	//TODO: Make these customizable in template
-	this.moraleRegenTime = 2000; // Morale influence regen time interval
-	this.moraleRegenMultiplier = 0.1; // Morale influence regen multiplier
-	this.moraleDeathDamageMultiplier = 0.3; // Morale damage on death multiplier
+	this.moraleRegenTime = 500; // Morale influence regen time interval
+	this.moraleRegenMultiplier = 0.05; // Morale influence regen multiplier
+	this.moraleDeathDamageMultiplier = 0.2; // Morale damage on death multiplier
 	this.moraleDamageAttacked = 0.2; //Morale damage on attacked
+
 	this.moraleLevelEffectThreshold = 2; // Morale level on which Demoralized effect is applied
 
-	this.penaltyRateWorker = 0.8 // Building and gathering speed rate penalty on low morale
-	this.penaltyRateAttack = 1.1 // Attack repeat time penalty on low morale
+	this.penaltyRateWorker = 0.7 // Building and gathering speed rate penalty on low morale
+	this.penaltyRateAttack = 1.3 // Attack repeat time penalty on low morale
 	this.bonusRateWorker = 1.1 // Building and gathering speed rate bonus on high morale
 	this.bonusRateAttack = 0.8 // Attack repeat time bonus on high morale
 
@@ -128,7 +129,7 @@ Morale.prototype.GetVisionRange = function(ent)
 	let cmpVision = Engine.QueryInterface(this.entity, IID_Vision);
 	if (!cmpVision)
 		return false;
-	return cmpVision.GetRange() / 2;
+	return cmpVision.GetRange() / 5;
 }
 
 Morale.prototype.ExecuteRegeneration = function()
@@ -196,7 +197,10 @@ Morale.prototype.ReduceMorale = function(amount)
 	return { "MoraleChange": this.Morale - oldMorale };
 };
 
-
+/**
+ * @param {number} amount - The amount of Morale to add. Stop increase once reached maxMorale.
+ * @return {{ MoraleChange:number }} -  Number of Morale points gained.
+ */
 Morale.prototype.IncreaseMorale = function(amount)
 {
 	let old = this.Morale;
@@ -465,8 +469,8 @@ Morale.prototype.CauseMoraleInstantInfluence = function(event)
 
 Morale.prototype.CalculateMoraleAttackBonus = function(target, attacker)
 {
-	let sideFlankBonus = 0.5;
-	let backFlankBonus = 1;
+	let sideFlankBonus = 1;
+	let backFlankBonus = 2;
 	let backAngleToleration = 1.0;
 	let sideAngleToleration = 2.0;
 	let flankBonus = 0;
