@@ -28,7 +28,6 @@
   </Identity>
   <Morale>
     <Max op="mul">0.7</Max>
-    <Initial op="mul">0.7</Initial>
   </Morale>
   <Position>
     <Anchor>upright</Anchor>

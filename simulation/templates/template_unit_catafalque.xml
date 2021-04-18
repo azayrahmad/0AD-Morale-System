@@ -27,7 +27,7 @@
   <Morale>
     <Max>100</Max>
     <Initial>100</Initial>
-    <Significance>10</Significance>
+    <Significance>50</Significance>
   </Morale>
   <Position>
     <Anchor>pitch-roll</Anchor>

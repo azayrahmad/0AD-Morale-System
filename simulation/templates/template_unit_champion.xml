@@ -18,7 +18,7 @@
   <Morale>
     <Max op="mul">2</Max>
     <Initial op="mul">2</Initial>
-    <Significance op="mul">5</Significance>
+    <Significance op="mul">25</Significance>
   </Morale>
   <Selectable>
     <Overlay>

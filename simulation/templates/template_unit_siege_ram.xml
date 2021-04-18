@@ -45,7 +45,6 @@
   </Loot>
   <Morale>
     <Max op="mul">0.7</Max>
-    <Initial op="mul">0.7</Initial>
     <Significance op="mul">0.7</Significance>
   </Morale>
   <Resistance>

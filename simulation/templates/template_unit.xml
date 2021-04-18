@@ -53,8 +53,8 @@
     <Type>unit</Type>
   </Minimap>
   <Morale>
-    <Max>100</Max>
-    <Initial>50</Initial>
+    <Max>200</Max>
+    <Initial>0.5</Initial>
     <RegenRate>0</RegenRate>
     <IdleRegenRate>0</IdleRegenRate>
     <Significance>1</Significance>

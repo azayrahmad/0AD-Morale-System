@@ -36,8 +36,8 @@
   </Loot>
   <Morale>
     <Max op="mul">5</Max>
-    <Initial op="mul">5</Initial>
-    <Significance>15</Significance>
+    <Initial op="mul">2</Initial>
+    <Significance>50</Significance>
   </Morale>
   <Minimap>
     <Type>hero</Type>

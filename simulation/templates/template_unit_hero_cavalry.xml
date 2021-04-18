@@ -24,7 +24,6 @@
   </Identity>
   <Morale>
     <Max op="mul">1.5</Max>
-    <Initial op="mul">1.5</Initial>
     <Significance op="mul">1.5</Significance>
   </Morale>
   <Position>

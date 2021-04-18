@@ -12,7 +12,7 @@ Morale.prototype.Schema =
 		"<ref name='nonNegativeDecimal'/>" +
 	"</element>" +
 	"<optional>" +
-		"<element name='Initial' a:help='Initial Morale. Default if unspecified is equal to Max.'>" +
+		"<element name='Initial' a:help='Initial Morale percentage. Default if unspecified is equal to Max.'>" +
 			"<ref name='nonNegativeDecimal'/>" +
 		"</element>" +
 	"</optional>" +
@@ -41,7 +41,7 @@ Morale.prototype.Init = function()
 	// Cache this value so it allows techs to maintain previous morale level
 	this.maxMorale = +this.template.Max;
 	// Default to <Initial>, but use <Max> if it's undefined or zero
-	this.Morale = +(this.template.Initial || this.GetMaxMorale());
+	this.Morale = +(this.template.Initial * this.GetMaxMorale() || this.GetMaxMorale());
 
 	this.regenRate = ApplyValueModificationsToEntity("Morale/RegenRate", +this.template.RegenRate, this.entity);
 	this.idleRegenRate = ApplyValueModificationsToEntity("Morale/IdleRegenRate", +this.template.IdleRegenRate, this.entity);
@@ -51,7 +51,7 @@ Morale.prototype.Init = function()
 	//TODO: Make these customizable in template
 	this.moraleRegenTime = 500; // Morale influence regen time interval
 	this.moraleRegenMultiplier = 0.05; // Morale influence regen multiplier
-	this.moraleDeathDamageMultiplier = 0.2; // Morale damage on death multiplier
+	this.moraleDeathDamageMultiplier = 0.4; // Morale damage on death multiplier
 	this.moraleDamageAttacked = 0.2; //Morale damage on attacked
 
 	this.moraleLevelEffectThreshold = 2; // Morale level on which Demoralized effect is applied
@@ -129,7 +129,7 @@ Morale.prototype.GetVisionRange = function(ent)
 	let cmpVision = Engine.QueryInterface(this.entity, IID_Vision);
 	if (!cmpVision)
 		return false;
-	return cmpVision.GetRange() / 5;
+	return cmpVision.GetRange() / 3;
 }
 
 Morale.prototype.ExecuteRegeneration = function()
@@ -339,8 +339,7 @@ Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 			cmpModifiersManager.AddModifiers(
 				(ally ? "MoraleAllies" : "MoraleEnemies") + ent,
 				{
-					"Morale/RegenRate": [{ "affects": ["Unit","Structure"], "add": moraleInfluence}],
-					"Morale/IdleRegenRate": [{ "affects": ["Unit","Structure"], "add": moraleInfluence}]
+					"Morale/RegenRate": [{ "affects": ["Unit","Structure"], "add": moraleInfluence}]
 				},
 				this.entity,
 				true
@@ -353,7 +352,7 @@ Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 		var cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
 		if (cmpUnitAI && !cmpUnitAI.IsFleeing())
 		{
-			cmpUnitAI.Flee(ents[0], true);
+			cmpUnitAI.PushOrderFront("Flee", { "target": ents[0], "force": true });
 		}
 	}
 }
@@ -496,7 +495,6 @@ Morale.prototype.CalculateMoraleAttackBonus = function(target, attacker)
 	{
 		flankBonus = sideFlankBonus;
 	}
-
 	this.ReduceMorale(flankBonus);
 }
 
@@ -564,17 +562,18 @@ Morale.prototype.OnAttacked = function(msg)
 
 Morale.prototype.OnHealthChanged = function(msg)
 {
-	let diff = msg.to - msg.from;
-	if (diff > 0)
-		this.IncreaseMorale(diff);
-	else
-		this.ReduceMorale(-diff);
-
 	let cmpHealth = QueryMiragedInterface(this.entity, IID_Health);
 	if (cmpHealth)
 	{
-		let cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
+		let maxHp = cmpHealth.GetMaxHitpoints();
 		let currentHp = msg.to;
+		let diff = this.GetMaxMorale() * (msg.to - msg.from) / maxHp;
+		if (diff > 0)
+			this.IncreaseMorale(diff);
+		else
+			this.ReduceMorale(-diff);
+
+		let cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
 		let threshold =  cmpHealth.GetMaxHitpoints() / 3;
 		if (currentHp <= threshold)
 		{

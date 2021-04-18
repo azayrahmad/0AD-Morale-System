@@ -40,7 +40,6 @@
   </Loot>
   <Morale>
     <Max op="mul">0.5</Max>
-    <Initial op="mul">0.5</Initial>
     <Significance>0.5</Significance>
   </Morale>
   <ResourceGatherer disable=""/>

@@ -19,7 +19,6 @@
   </Identity>
   <Morale>
     <Max op="mul">8</Max>
-    <Initial op="mul">8</Initial>
     <Significance op="mul">8</Significance>
   </Morale>
   <Position>
