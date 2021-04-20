@@ -124,7 +124,7 @@ Morale.prototype.GetMoraleDamageAttacked = function()
 	return this.moraleDamageAttacked;
 };
 
-Morale.prototype.GetVisionRange = function(ent)
+Morale.prototype.GetVisionRange = function()
 {
 	let cmpVision = Engine.QueryInterface(this.entity, IID_Vision);
 	if (!cmpVision)
@@ -140,8 +140,6 @@ Morale.prototype.ExecuteRegeneration = function()
 		this.IncreaseMorale(regen);
 	else
 		this.ReduceMorale(-regen);
-
-	let moraleLevel = this.GetMoraleLevel();
 };
 
 /*
@@ -281,6 +279,9 @@ Morale.prototype.ApplyMoraleEffects = function()
 
 	this.ChangeStance(this.entity, moraleLevel);
 
+	let cmpIdentity = Engine.QueryInterface(this.entity, IID_Identity);
+	if (cmpIdentity)
+		cmpIdentity.SetControllable(moraleLevel === 1);
 }
 
 //Change unit stance based on morale level
@@ -347,7 +348,7 @@ Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 		}
 	}
 
-	if(!ally && this.GetMorale() === 0)
+	if(!ally && this.GetMoraleLevel() === 1)
 	{
 		var cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
 		if (cmpUnitAI && !cmpUnitAI.IsFleeing())
@@ -393,7 +394,7 @@ Morale.prototype.CleanMoraleInfluence = function()
 	if (!cmpPlayer || cmpPlayer.GetState() == "defeated")
 		return;
 
-	let visionRange = this.GetVisionRange(this.entity)
+	let visionRange = this.GetVisionRange()
 	this.affectedPlayers = cmpPlayer.GetAllies();
 	this.rangeQuery = cmpRangeManager.CreateActiveQuery(
 		this.entity,
@@ -424,7 +425,7 @@ Morale.prototype.CleanMoraleInfluence = function()
 Morale.prototype.CauseMoraleInstantInfluence = function(event)
 {
 	let damageMultiplier = 1;
-	let moraleRange = this.GetVisionRange(this.entity);
+	let moraleRange = this.GetVisionRange();
 
 	let cmpPosition = Engine.QueryInterface(this.entity, IID_Position);
 	if (!cmpPosition || !cmpPosition.IsInWorld())
@@ -540,7 +541,7 @@ Morale.prototype.OnDiplomacyChanged = function(msg)
 		this.CleanMoraleInfluence();
 };
 
-Morale.prototype.OnDestroy = function(msg)
+Morale.prototype.OnDestroy = function()
 {
 	this.CleanMoraleInfluence();
 };
@@ -550,7 +551,7 @@ Morale.prototype.OnAttacked = function(msg)
 	if (msg.fromStatusEffect)
 		return;
 
-	if (msg.attacker && this.GetMorale() === 0)
+	if (msg.attacker && this.GetMoraleLevel() === 1)
 	{
 		let cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
 		if (cmpUnitAI && !cmpUnitAI.IsFleeing())
