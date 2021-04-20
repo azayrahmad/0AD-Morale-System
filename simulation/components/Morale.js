@@ -1,3 +1,8 @@
+/**
+ * Simulate morale on units.
+ *
+ * @author Aziz Rahmad <azayrahmadDOTgmail.com>
+ */
 function Morale() {}
 
 Morale.prototype.Schema =
@@ -49,42 +54,36 @@ Morale.prototype.Init = function()
 	this.significance = +(this.template.Significance || 1);
 
 	//TODO: Make these customizable in template
-	this.moraleRegenTime = 500; // Morale influence regen time interval
-	this.moraleRegenMultiplier = 0.05; // Morale influence regen multiplier
-	this.moraleDeathDamageMultiplier = 0.4; // Morale damage on death multiplier
-	this.moraleDamageAttacked = 0.2; //Morale damage on attacked
+	this.moraleRegenTime = 500; 				// Morale influence regen time interval
+	this.moraleRegenMultiplier = 0.05; 			// Morale influence regen multiplier
+	this.moraleDeathDamageMultiplier = 0.4; 	// Morale damage on death multiplier
+	this.moraleDamageAttacked = 0.2;		 	// Morale damage on attacked
 
-	this.moraleLevelEffectThreshold = 2; // Morale level on which Demoralized effect is applied
+	this.moraleVisionRangeMultiplier = 0.3 		// Range of morale influence, multiplied from entity's vision range
+	this.moraleLevelEffectThreshold = 2; 		// Morale level on which Demoralized effect is applied
 
-	this.penaltyRateWorker = 0.7 // Building and gathering speed rate penalty on low morale
-	this.penaltyRateAttack = 1.3 // Attack repeat time penalty on low morale
-	this.bonusRateWorker = 1.1 // Building and gathering speed rate bonus on high morale
-	this.bonusRateAttack = 0.8 // Attack repeat time bonus on high morale
+	this.penaltyRateWorker = 0.7 				// Building and gathering speed rate penalty on low morale
+	this.penaltyRateAttack = 1.3 				// Attack repeat time penalty on low morale
+	this.bonusRateWorker = 1.1 					// Building and gathering speed rate bonus on high morale
+	this.bonusRateAttack = 0.8 					// Attack repeat time bonus on high morale
 
 	this.CheckMoraleRegenTimer();
 	this.CleanMoraleInfluence();
 };
 
+/**
+ * Get current morale points.
+ * @returns {number} Number of current Morale points for this entity.
+ */
 Morale.prototype.GetMorale = function()
 {
 	return this.Morale;
 };
 
-Morale.prototype.GetMoraleLevel = function()
-{
-	return this.Morale == 0 ? 1 : Math.ceil(5 * this.Morale / this.maxMorale);
-};
-
-Morale.prototype.IsMoraleLevelChanged = function(from)
-{
-	return from != this.GetMoraleLevel();
-};
-
-Morale.prototype.GetMaxMorale = function()
-{
-	return this.maxMorale;
-};
-
+/**
+ * Set current morale points.
+ * @param {number} value Amount of Morale points.
+ */
 Morale.prototype.SetMorale = function(value)
 {
 	let old = this.Morale;
@@ -92,16 +91,69 @@ Morale.prototype.SetMorale = function(value)
 	this.RegisterMoraleChanged(old);
 };
 
-Morale.prototype.GetIdleRegenRate = function()
+/**
+ * Get current maximum morale points.
+ * @returns {number} Number of current maximum Morale points for this entity.
+ */
+Morale.prototype.GetMaxMorale = function()
 {
-	return this.idleRegenRate;
+	return this.maxMorale;
 };
 
+/**
+ * Get current morale level.
+ *
+ * Morale level is a percentage of the morale points, from 1 to 5.
+ *
+ * @returns {number} Number of current Morale level.
+ */
+Morale.prototype.GetMoraleLevel = function()
+{
+	return this.Morale === 0 ? 1 : Math.ceil(5 * this.Morale / this.maxMorale);
+};
+
+/**
+ * Check if current morale level has changed.
+ *
+ * @param {number} from Previous Morale level.
+ * @returns {boolean} Returns true if there is morale level change.
+ */
+Morale.prototype.IsMoraleLevelChanged = function(from)
+{
+	return from != this.GetMoraleLevel();
+};
+
+/**
+ * Get base regen rate.
+ *
+ * Regen rate is the amount added/removed from current morale points.
+ *
+ * @returns {number} Number of Morale regen rate for this entity as set in template.
+ */
 Morale.prototype.GetRegenRate = function()
 {
 	return this.regenRate;
 };
 
+/**
+ * Get base idle regen rate.
+ *
+ * Idle regen rate is the additional regen rate if the entity is idle.
+ *
+ * @returns {number} Number of Morale idle regen rate for this entity as set in template.
+ */
+Morale.prototype.GetIdleRegenRate = function()
+{
+	return this.idleRegenRate;
+};
+
+/**
+ * Get current regen rate.
+ *
+ * Current regen rate is calculated considering if entity is idle or not.
+ *
+ * @returns {number} Number of current Morale regen rate for this entity.
+ */
 Morale.prototype.GetCurrentRegenRate = function()
 {
 	let regen = this.GetRegenRate();
@@ -114,22 +166,33 @@ Morale.prototype.GetCurrentRegenRate = function()
 	return regen;
 };
 
+/**
+ * Get morale significance of the entity.
+ *
+ * The higher the entity's significance, the greater morale influence it has
+ * to nearby entities.
+ *
+ * @returns {number} Number of Morale idle regen rate for this entity as set in template.
+ */
 Morale.prototype.GetSignificance = function()
 {
 	return this.significance;
 };
 
-Morale.prototype.GetMoraleDamageAttacked = function()
-{
-	return this.moraleDamageAttacked;
-};
-
+/**
+ * Get the vision range where morale influence of visible nearby entities is received.
+ *
+ * The morale vision range is closer than actual entity's vision range. Configurable
+ * via this.moraleVisionRangeMultiplier
+ *
+ * @returns {number} Morale vision range.
+ */
 Morale.prototype.GetVisionRange = function()
 {
 	let cmpVision = Engine.QueryInterface(this.entity, IID_Vision);
 	if (!cmpVision)
 		return false;
-	return cmpVision.GetRange() / 3;
+	return cmpVision.GetRange() * this.moraleVisionRangeMultiplier;
 }
 
 Morale.prototype.ExecuteRegeneration = function()
@@ -197,7 +260,7 @@ Morale.prototype.ReduceMorale = function(amount)
 
 /**
  * @param {number} amount - The amount of Morale to add. Stop increase once reached maxMorale.
- * @return {{ MoraleChange:number }} -  Number of Morale points gained.
+ * @return {{ old:number, new:number }} -  Number of Morale points gained.
  */
 Morale.prototype.IncreaseMorale = function(amount)
 {
