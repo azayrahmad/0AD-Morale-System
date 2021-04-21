@@ -59,13 +59,13 @@ Morale.prototype.Init = function()
 	this.moraleDeathDamageMultiplier = 0.4; 	// Morale damage on death multiplier
 	this.moraleDamageAttacked = 0.2;		 	// Morale damage on attacked
 
-	this.moraleVisionRangeMultiplier = 0.3 		// Range of morale influence, multiplied from entity's vision range
+	this.moraleVisionRangeMultiplier = 0.3; 	// Range of morale influence, multiplied from entity's vision range
 	this.moraleLevelEffectThreshold = 2; 		// Morale level on which Demoralized effect is applied
 
-	this.penaltyRateWorker = 0.7 				// Building and gathering speed rate penalty on low morale
-	this.penaltyRateAttack = 1.3 				// Attack repeat time penalty on low morale
-	this.bonusRateWorker = 1.1 					// Building and gathering speed rate bonus on high morale
-	this.bonusRateAttack = 0.8 					// Attack repeat time bonus on high morale
+	this.penaltyRateWorker = 0.7; 				// Building and gathering speed rate penalty on low morale
+	this.penaltyRateAttack = 1.3; 				// Attack repeat time penalty on low morale
+	this.bonusRateWorker = 1.1; 				// Building and gathering speed rate bonus on high morale
+	this.bonusRateAttack = 0.8; 				// Attack repeat time bonus on high morale
 
 	this.CheckMoraleRegenTimer();
 	this.CleanMoraleInfluence();
