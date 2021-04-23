@@ -16,9 +16,9 @@
   <Loot>
     <xp>20</xp>
   </Loot>
-  <Morale>
+  <MoraleInfluence>
     <Significance>1</Significance>
-  </Morale>
+  </MoraleInfluence>
   <UnitAI>
     <NaturalBehaviour>aggressive</NaturalBehaviour>
   </UnitAI>

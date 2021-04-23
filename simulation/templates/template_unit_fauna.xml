@@ -17,10 +17,10 @@
   <Minimap>
     <Type>food</Type>
     <Color r="227" g="130" b="141"/>
-  </Minimap>  
-  <Morale>
+  </Minimap>
+  <MoraleInfluence>
     <Significance>0</Significance>
-  </Morale>
+  </MoraleInfluence>
   <Position>
     <TurnRate>4</TurnRate>
   </Position>

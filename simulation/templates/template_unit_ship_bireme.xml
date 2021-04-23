@@ -57,8 +57,10 @@
   </Loot>
   <Morale>
     <Max op="mul">10</Max>
-    <Significance op="mul">25</Significance>
   </Morale>
+  <MoraleInfluence>
+    <Significance op="mul">25</Significance>
+  </MoraleInfluence>
   <ResourceGatherer disable=""/>
   <Sound>
     <SoundGroups>

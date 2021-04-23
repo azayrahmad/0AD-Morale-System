@@ -36,9 +36,9 @@
     <food>60</food>
     <metal>40</metal>
   </Loot>
-  <Morale>
+  <MoraleInfluence>
     <Significance op="mul">5</Significance>
-  </Morale>
+  </MoraleInfluence>
   <Position>
     <TurnRate>3</TurnRate>
   </Position>

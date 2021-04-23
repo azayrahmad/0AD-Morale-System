@@ -37,8 +37,10 @@
   <Morale>
     <Max op="mul">5</Max>
     <Initial op="mul">2</Initial>
-    <Significance>50</Significance>
   </Morale>
+  <MoraleInfluence>
+    <Significance>50</Significance>
+  </MoraleInfluence>
   <Minimap>
     <Type>hero</Type>
   </Minimap>

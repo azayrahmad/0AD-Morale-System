@@ -19,8 +19,10 @@
   </Identity>
   <Morale>
     <Max op="mul">8</Max>
-    <Significance op="mul">8</Significance>
   </Morale>
+  <MoraleInfluence>
+    <Significance op="mul">8</Significance>
+  </MoraleInfluence>
   <Position>
     <Anchor>pitch-roll</Anchor>
     <TurnRate>2</TurnRate>

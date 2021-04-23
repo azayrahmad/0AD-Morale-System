@@ -32,8 +32,10 @@
   </Loot>
   <Morale>
     <Max op="mul">1.5</Max>
-    <Significance op="mul">1.5</Significance>
   </Morale>
+  <MoraleInfluence>
+    <Significance>2</Significance>
+  </MoraleInfluence>
   <Position>
     <TurnRate>5</TurnRate>
   </Position>

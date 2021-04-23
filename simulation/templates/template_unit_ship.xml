@@ -31,8 +31,10 @@
   </Identity>
   <Morale>
     <Max op="mul">1.5</Max>
-    <Significance>2</Significance>
   </Morale>
+  <MoraleInfluence>
+    <Significance>2</Significance>
+  </MoraleInfluence>
   <Position>
     <Anchor>upright</Anchor>
     <Floating>true</Floating>

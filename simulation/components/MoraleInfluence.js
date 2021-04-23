@@ -1,5 +1,5 @@
 /**
- * Simulate morale on units.
+ * Simulate morale influence to nearby units.
  *
  * @author Aziz Rahmad <azayrahmadDOTgmail.com>
  */
@@ -29,15 +29,26 @@ MoraleInfluence.prototype.Init = function()
 	this.significance = +(this.template.Significance || 1);
 
 	//TODO: Make these customizable in template
-	this.moraleRegenTime = 500; 				// Morale influence regen time interval
-	this.moraleRegenMultiplier = 0.05; 			// Morale influence regen multiplier
-	this.moraleDeathDamageMultiplier = 0.4; 	// Morale damage on death multiplier
-	this.moraleDamageAttacked = 0.2;		 	// Morale damage on attacked
+	this.moraleRegenMultiplier = 0.1; 		// Morale influence regen multiplier
+	this.moraleDeathDamageMultiplier = 0.4; // Morale damage on death multiplier
 
-	this.moraleVisionRangeMultiplier = 0.3 		// Range of morale influence, multiplied from entity's vision range
-	this.moraleLevelEffectThreshold = 2; 		// Morale level on which Demoralized effect is applied
+	this.moraleVisionRangeMultiplier = 0.3 	// Range of morale influence, multiplied from entity's vision range
+	this.moraleLevelEffectThreshold = 2; 	// Morale level on which Demoralized effect is applied
 
 	this.CleanMoraleInfluence();
+};
+
+/**
+ * Get morale significance of the entity.
+ *
+ * The higher the entity's significance, the greater morale influence it has
+ * to nearby entities.
+ *
+ * @returns {number} Number of Morale idle regen rate for this entity as set in template.
+ */
+MoraleInfluence.prototype.GetSignificance = function()
+{
+	return this.significance;
 };
 
 /**
@@ -48,7 +59,7 @@ MoraleInfluence.prototype.Init = function()
  *
  * @returns {number} Morale vision range.
  */
-Morale.prototype.GetVisionRange = function()
+MoraleInfluence.prototype.GetVisionRange = function()
 {
 	let cmpVision = Engine.QueryInterface(this.entity, IID_Vision);
 	if (!cmpVision)
@@ -64,7 +75,7 @@ MoraleInfluence.prototype.CalculateMoraleInfluence = function(ent, ally)
 	{
 		let alliance = ally ? 1 : -1
 		let moralePercentage = cmpMorale.GetMoraleLevel() / 5
-		let moraleSignificance = cmpMorale.GetSignificance()
+		let moraleSignificance = this.GetSignificance()
 
 		return alliance * moralePercentage * moraleSignificance;
 	}
@@ -235,6 +246,11 @@ MoraleInfluence.prototype.OnGarrisonedUnitsChanged = function(msg)
 	this.ApplyMoraleInfluence(msg.added, true);
 	this.RemoveMoraleInfluence(msg.removed, true);
 };
+
+MoraleInfluence.prototype.OnOwnershipChanged = function(msg)
+{
+	this.CleanMoraleInfluence();
+}
 
 MoraleInfluence.prototype.OnDiplomacyChanged = function(msg)
 {

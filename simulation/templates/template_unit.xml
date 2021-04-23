@@ -57,8 +57,10 @@
     <Initial>0.5</Initial>
     <RegenRate>0</RegenRate>
     <IdleRegenRate>0</IdleRegenRate>
-    <Significance>1</Significance>
   </Morale>
+  <MoraleInfluence>
+    <Significance>1</Significance>
+  </MoraleInfluence>
   <Obstruction>
     <Unit/>
     <Active>true</Active>

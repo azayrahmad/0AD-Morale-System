@@ -40,8 +40,10 @@
   </Loot>
   <Morale>
     <Max op="mul">0.5</Max>
-    <Significance>0.5</Significance>
   </Morale>
+  <MoraleInfluence>
+    <Significance>0.5</Significance>
+  </MoraleInfluence>
   <ResourceGatherer disable=""/>
   <Selectable>
     <Overlay>

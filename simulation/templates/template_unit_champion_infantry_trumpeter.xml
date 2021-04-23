@@ -34,8 +34,10 @@
   </Loot>
   <Morale>
     <Max op="mul">1.5</Max>
-    <Significance op="mul">10</Significance>
   </Morale>
+  <MoraleInfluence>
+    <Significance>10</Significance>
+  </MoraleInfluence>
   <Resistance>
     <Entity>
       <Damage>

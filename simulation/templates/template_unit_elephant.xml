@@ -13,9 +13,9 @@
   <Loot>
     <xp>260</xp>
   </Loot>
-  <Morale>
+  <MoraleInfluence>
     <Significance op="mul">5</Significance>
-  </Morale>
+  </MoraleInfluence>
   <Position>
     <TurnRate>3</TurnRate>
   </Position>

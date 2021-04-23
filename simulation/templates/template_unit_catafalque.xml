@@ -27,8 +27,10 @@
   <Morale>
     <Max>100</Max>
     <Initial>100</Initial>
-    <Significance>50</Significance>
   </Morale>
+  <MoraleInfluence>
+    <Significance>50</Significance>
+  </MoraleInfluence>
   <Position>
     <Anchor>pitch-roll</Anchor>
   </Position>

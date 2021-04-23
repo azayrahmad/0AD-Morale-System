@@ -18,8 +18,10 @@
   <Morale>
     <Max op="mul">2</Max>
     <Initial op="mul">2</Initial>
-    <Significance op="mul">25</Significance>
   </Morale>
+  <MoraleInfluence>
+    <Significance op="mul">25</Significance>
+  </MoraleInfluence>
   <Selectable>
     <Overlay>
       <Texture>

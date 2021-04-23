@@ -6,9 +6,9 @@ Health.prototype.HandleDeath = function()
 	let cmpDeathDamage = Engine.QueryInterface(this.entity, IID_DeathDamage);
 	if (cmpDeathDamage)
 		cmpDeathDamage.CauseDeathDamage();
-	let cmpMorale = Engine.QueryInterface(this.entity, IID_Morale);
-	if (cmpMorale)
-		cmpMorale.CauseMoraleInstantInfluence("death");
+	let cmpMoraleInfluence = Engine.QueryInterface(this.entity, IID_MoraleInfluence);
+	if (cmpMoraleInfluence)
+		cmpMoraleInfluence.CauseMoraleInstantInfluence("death");
 
 	PlaySound("death", this.entity);
 
