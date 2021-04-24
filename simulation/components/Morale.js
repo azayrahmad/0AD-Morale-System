@@ -29,6 +29,8 @@ Morale.prototype.Schema =
 
 Morale.prototype.Init = function()
 {
+	this.affectedPlayers = [];
+	this.affectedPlayersEnemies = [];
 	// Cache this value so it allows techs to maintain previous morale level
 	this.maxMorale = +this.template.Max;
 	// Default to <Initial>, but use <Max> if it's undefined or zero
@@ -49,7 +51,13 @@ Morale.prototype.Init = function()
 	this.bonusRateWorker = 1.1; 		// Building and gathering speed rate bonus on high morale
 	this.bonusRateAttack = 0.8; 		// Attack repeat time bonus on high morale
 
+	//TODO: Make these customizable in template
+	this.moraleRegenMultiplier = 0.1; 		// Morale influence regen multiplier
+	this.moraleVisionRangeMultiplier = 0.3 	// Range of morale influence, multiplied from entity's vision range
+	this.moraleLevelEffectThreshold = 2; 	// Morale level on which Demoralized effect is applied
+
 	this.CheckMoraleRegenTimer();
+	this.CleanMoraleInfluence();
 };
 
 /**
@@ -145,6 +153,183 @@ Morale.prototype.GetCurrentRegenRate = function()
 			regen += this.GetIdleRegenRate();
 	}
 	return regen;
+};
+
+/**
+ * Get the vision range where morale influence of visible nearby entities is received.
+ *
+ * The morale vision range is closer than actual entity's vision range. Configurable
+ * via this.moraleVisionRangeMultiplier
+ *
+ * @returns {number} Morale vision range.
+ */
+Morale.prototype.GetVisionRange = function()
+{
+	let cmpVision = Engine.QueryInterface(this.entity, IID_Vision);
+	if (!cmpVision)
+		return false;
+	return cmpVision.GetRange() * this.moraleVisionRangeMultiplier;
+};
+
+/**
+ * Calculate Morale Influence (alliance, level, and significance).
+ *
+ * @param {Object} ent - The entity with influence.
+ * @param {boolean} ally - Whether the entity is allied to this entity.
+ * @returns {number} Morale influence value.
+ */
+Morale.prototype.CalculateMoraleInfluence = function(ent, ally)
+{
+	let cmpMoraleInfluence = Engine.QueryInterface(ent, IID_MoraleInfluence);
+	if (cmpMoraleInfluence)
+	{
+		let alliance = ally ? 1 : -1;
+		let moraleSignificance = cmpMoraleInfluence.GetSignificance();
+		let moralePercentage = 1;
+		let moraleInfluenceBonus = 1;
+
+		let cmpIdentity = Engine.QueryInterface(this.entity, IID_Identity);
+		if (cmpIdentity && cmpMoraleInfluence.template.InfluenceBonus)
+		{
+			if (!ally && cmpMoraleInfluence.template.InfluenceBonus.Enemy)
+			{
+				for (let affectedClass in cmpMoraleInfluence.template.InfluenceBonus.Enemy)
+				{
+					let bonus = +cmpMoraleInfluence.template.InfluenceBonus.Enemy[affectedClass];
+					if (cmpIdentity.HasClass(affectedClass))
+						moraleInfluenceBonus += bonus;
+				}
+			}
+			else if (ally && cmpMoraleInfluence.template.InfluenceBonus.Ally)
+			{
+				for (let affectedClass in cmpMoraleInfluence.template.InfluenceBonus.Ally)
+				{
+					let bonus = +cmpMoraleInfluence.template.InfluenceBonus.Ally[affectedClass];
+					if (cmpIdentity.HasClass(affectedClass))
+						moraleInfluenceBonus += bonus;
+				}
+			}
+		}
+
+		var cmpMorale = Engine.QueryInterface(ent, IID_Morale);
+		if (cmpMorale)
+			moralePercentage = cmpMorale.GetMoraleLevel() / 5;
+
+		return alliance * moralePercentage * moraleSignificance * moraleInfluenceBonus;
+	}
+	else
+		return 0;
+};
+
+/**
+ * Applying morale influence by updating regenRate of all entities in range.
+ *
+ * @param {Object} ents - Collection of entity with influence in range.
+ * @param {boolean} ally - Whether the entity is allied to this entity.
+ */
+Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
+{
+	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
+	for (let ent of ents)
+	{
+		let moraleInfluence = this.CalculateMoraleInfluence(ent, ally) * this.moraleRegenMultiplier;
+		if (moraleInfluence)
+		{
+			cmpModifiersManager.AddModifiers(
+				(ally ? "MoraleAllies" : "MoraleEnemies") + ent,
+				{
+					"Morale/RegenRate": [{ "affects": ["Unit","Structure"], "add": moraleInfluence}]
+				},
+				this.entity,
+				true
+			);
+		}
+	}
+
+	if(!ally)
+	{
+        if (this.GetMoraleLevel() === 1)
+		{
+            var cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
+    		if (cmpUnitAI)
+		 	{
+				if(ents.length && !cmpUnitAI.IsFleeing())
+					cmpUnitAI.PushOrderFront("Flee", { "target": ents[0], "force": true });
+				// else if (ents.length === 0 && cmpUnitAI.IsFleeing())
+				// 	cmpUnitAI.StopMoving();
+			}
+        }
+	}
+};
+
+/**
+ * Removing applied morale influence when entities leaving the range.
+ *
+ * @param {Object} ents - Collection of entity with influence leaving the range.
+ * @param {boolean} ally - Whether the entity is allied to this entity.
+ */
+Morale.prototype.RemoveMoraleInfluence = function(ents, ally)
+{
+	if (!ents.length)
+		return;
+	for (let ent of ents)
+	{
+		var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
+		cmpModifiersManager.RemoveAllModifiers((ally ? "MoraleAllies" : "MoraleEnemies") + ent, this.entity);
+	}
+};
+
+/**
+ * Remove all influence and refresh entities in range.
+ */
+Morale.prototype.CleanMoraleInfluence = function()
+{
+	var cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
+
+	if(this.affectedPlayers)
+		this.RemoveMoraleInfluence(this.affectedPlayers, true);
+	if(this.affectedPlayersEnemies)
+		this.RemoveMoraleInfluence(this.affectedPlayersEnemies, false);
+
+	if (this.rangeQuery)
+		cmpRangeManager.DestroyActiveQuery(this.rangeQuery);
+	if (this.rangeQueryEnemy)
+		cmpRangeManager.DestroyActiveQuery(this.rangeQueryEnemy);
+
+	this.rangeQuery = undefined;
+	this.rangeQueryEnemy = undefined;
+
+	var cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
+	if (!cmpPlayer)
+		cmpPlayer = QueryOwnerInterface(this.entity);
+
+	if (!cmpPlayer || cmpPlayer.GetState() == "defeated")
+		return;
+
+	let visionRange = this.GetVisionRange()
+	this.affectedPlayers = cmpPlayer.GetAllies();
+	this.rangeQuery = cmpRangeManager.CreateActiveQuery(
+		this.entity,
+		0,
+		visionRange,
+		this.affectedPlayers,
+		IID_Identity,
+		cmpRangeManager.GetEntityFlagMask("normal"),
+		false
+	);
+	cmpRangeManager.EnableActiveQuery(this.rangeQuery);
+
+	this.affectedPlayersEnemies = cmpPlayer.GetEnemies();
+	this.rangeQueryEnemy = cmpRangeManager.CreateActiveQuery(
+		this.entity,
+		0,
+		visionRange,
+		this.affectedPlayersEnemies,
+		IID_Identity,
+		cmpRangeManager.GetEntityFlagMask("normal"),
+		false
+	);
+	cmpRangeManager.EnableActiveQuery(this.rangeQueryEnemy);
 };
 
 Morale.prototype.ExecuteRegeneration = function()
@@ -427,6 +612,52 @@ Morale.prototype.OnHealthChanged = function(msg)
 			cmpModifiersManager.RemoveAllModifiers("BadlyWoundedMorale", this.entity);
 		}
 	}
+};
+
+Morale.prototype.OnRangeUpdate = function(msg)
+{
+	if (msg.tag == this.rangeQuery)
+	{
+		this.ApplyMoraleInfluence(msg.added, true);
+		this.RemoveMoraleInfluence(msg.removed, true);
+	}
+	if (msg.tag == this.rangeQueryEnemy)
+	{
+		this.ApplyMoraleInfluence(msg.added, false);
+		this.RemoveMoraleInfluence(msg.removed, false);
+	}
+};
+
+Morale.prototype.OnGarrisonedUnitsChanged = function(msg)
+{
+	this.ApplyMoraleInfluence(msg.added, true);
+	this.RemoveMoraleInfluence(msg.removed, true);
+};
+
+Morale.prototype.OnOwnershipChanged = function(msg)
+{
+	this.CleanMoraleInfluence();
+};
+
+Morale.prototype.OnDiplomacyChanged = function(msg)
+{
+	var cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
+	if (cmpPlayer && (cmpPlayer.GetPlayerID() == msg.player || cmpPlayer.GetPlayerID() == msg.otherPlayer) ||
+	   IsOwnedByPlayer(msg.player, this.entity) ||
+	   IsOwnedByPlayer(msg.otherPlayer, this.entity))
+		this.CleanMoraleInfluence();
+};
+
+Morale.prototype.OnDestroy = function()
+{
+	this.CleanMoraleInfluence();
+};
+
+Morale.prototype.OnGlobalPlayerDefeated = function(msg)
+{
+	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
+	if (cmpPlayer && cmpPlayer.GetPlayerID() == msg.playerId)
+		this.CleanMoraleInfluence();
 };
 
 Morale.prototype.RegisterMoraleChanged = function(from)
