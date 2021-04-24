@@ -19,6 +19,19 @@ MoraleInfluence.prototype.Schema =
 		"<element name='Range' a:help='Range of morale influence.'>" +
 			"<data type='decimal'/>" +
 		"</element>" +
+	"</optional>" +
+	"<optional>" +
+		"<element name='InfluenceBonus'>" +
+			"<oneOrMore>" +
+				"<element a:help='Alliance.'>" +
+					"<anyName/>" +
+					"<element a:help='Name of the class that will receive the bonus'>" +
+						"<anyName/>" +
+						"<data type='decimal'/>" +
+					"</element>" +
+				"</element>" +
+			"</oneOrMore>" +
+		"</element>" +
 	"</optional>";
 
 MoraleInfluence.prototype.Init = function()
@@ -76,15 +89,45 @@ MoraleInfluence.prototype.GetVisionRange = function()
  */
 MoraleInfluence.prototype.CalculateMoraleInfluence = function(ent, ally)
 {
-	let alliance = ally ? 1 : -1;
-	let moraleSignificance = this.GetSignificance();
-	let moralePercentage = 1;
+	let cmpMoraleInfluence = Engine.QueryInterface(ent, IID_MoraleInfluence);
+	if (cmpMoraleInfluence)
+	{
+		let alliance = ally ? 1 : -1;
+		let moraleSignificance = cmpMoraleInfluence.GetSignificance();
+		let moralePercentage = 1;
+		let moraleInfluenceBonus = 1;
 
-	var cmpMorale = Engine.QueryInterface(ent, IID_Morale);
-	if (cmpMorale)
-		moralePercentage = cmpMorale.GetMoraleLevel() / 5;
+		let cmpIdentity = Engine.QueryInterface(this.entity, IID_Identity);
+		if (cmpIdentity && cmpMoraleInfluence.template.InfluenceBonus)
+		{
+			if (!ally && cmpMoraleInfluence.template.InfluenceBonus.Enemy)
+			{
+				for (let affectedClass in cmpMoraleInfluence.template.InfluenceBonus.Enemy)
+				{
+					let bonus = +cmpMoraleInfluence.template.InfluenceBonus.Enemy[affectedClass];
+					if (cmpIdentity.HasClass(affectedClass))
+						moraleInfluenceBonus += bonus;
+				}
+			}
+			else if (ally && cmpMoraleInfluence.template.InfluenceBonus.Ally)
+			{
+				for (let affectedClass in cmpMoraleInfluence.template.InfluenceBonus.Ally)
+				{
+					let bonus = +cmpMoraleInfluence.template.InfluenceBonus.Ally[affectedClass];
+					if (cmpIdentity.HasClass(affectedClass))
+						moraleInfluenceBonus += bonus;
+				}
+			}
+		}
 
-	return alliance * moralePercentage * moraleSignificance;
+		var cmpMorale = Engine.QueryInterface(ent, IID_Morale);
+		if (cmpMorale)
+			moralePercentage = cmpMorale.GetMoraleLevel() / 5;
+
+		return alliance * moralePercentage * moraleSignificance * moraleInfluenceBonus;
+	}
+	else
+		return 0;
 };
 
 /**

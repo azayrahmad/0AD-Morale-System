@@ -47,6 +47,11 @@
   </Morale>
   <MoraleInfluence>
     <Significance>2</Significance>
+    <InfluenceBonus>
+        <Enemy>
+            <Infantry>5</Infantry>
+        </Enemy>
+    </InfluenceBonus>
   </MoraleInfluence>
   <Position>
     <TurnRate>5</TurnRate>
