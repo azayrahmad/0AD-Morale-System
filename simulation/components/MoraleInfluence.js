@@ -65,23 +65,34 @@ MoraleInfluence.prototype.GetVisionRange = function()
 	if (!cmpVision)
 		return false;
 	return cmpVision.GetRange() * this.moraleVisionRangeMultiplier;
-}
+};
 
-// Calculate Morale Influence (alliance, level, and significance)
+/**
+ * Calculate Morale Influence (alliance, level, and significance).
+ *
+ * @param {Object} ent - The entity with influence.
+ * @param {boolean} ally - Whether the entity is allied to this entity.
+ * @returns {number} Morale influence value.
+ */
 MoraleInfluence.prototype.CalculateMoraleInfluence = function(ent, ally)
 {
+	let alliance = ally ? 1 : -1;
+	let moraleSignificance = this.GetSignificance();
+	let moralePercentage = 1;
+
 	var cmpMorale = Engine.QueryInterface(ent, IID_Morale);
 	if (cmpMorale)
-	{
-		let alliance = ally ? 1 : -1
-		let moralePercentage = cmpMorale.GetMoraleLevel() / 5
-		let moraleSignificance = this.GetSignificance()
+		moralePercentage = cmpMorale.GetMoraleLevel() / 5;
 
-		return alliance * moralePercentage * moraleSignificance;
-	}
-}
+	return alliance * moralePercentage * moraleSignificance;
+};
 
-// Applying morale influence by updating regenRate of all entities in range.
+/**
+ * Applying morale influence by updating regenRate of all entities in range.
+ *
+ * @param {Object} ents - Collection of entity with influence in range.
+ * @param {boolean} ally - Whether the entity is allied to this entity.
+ */
 MoraleInfluence.prototype.ApplyMoraleInfluence = function(ents, ally)
 {
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
@@ -107,12 +118,23 @@ MoraleInfluence.prototype.ApplyMoraleInfluence = function(ents, ally)
         if (cmpMorale && cmpMorale.GetMoraleLevel() === 1)
 		{
             var cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
-    		if (cmpUnitAI && !cmpUnitAI.IsFleeing())
-    			cmpUnitAI.PushOrderFront("Flee", { "target": ents[0], "force": true });
+    		if (cmpUnitAI)
+		 	{
+				if(ents.length && !cmpUnitAI.IsFleeing())
+					cmpUnitAI.PushOrderFront("Flee", { "target": ents[0], "force": true });
+				// else if (ents.length === 0 && cmpUnitAI.IsFleeing())
+				// 	cmpUnitAI.StopMoving();
+			}
         }
 	}
-}
+};
 
+/**
+ * Removing applied morale influence when entities leaving the range.
+ *
+ * @param {Object} ents - Collection of entity with influence leaving the range.
+ * @param {boolean} ally - Whether the entity is allied to this entity.
+ */
 MoraleInfluence.prototype.RemoveMoraleInfluence = function(ents, ally)
 {
 	if (!ents.length)
@@ -122,9 +144,11 @@ MoraleInfluence.prototype.RemoveMoraleInfluence = function(ents, ally)
 		var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
 		cmpModifiersManager.RemoveAllModifiers((ally ? "MoraleAllies" : "MoraleEnemies") + ent, this.entity);
 	}
+};
 
-}
-
+/**
+ * Remove all influence and refresh entities in range.
+ */
 MoraleInfluence.prototype.CleanMoraleInfluence = function()
 {
 	var cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
@@ -173,10 +197,13 @@ MoraleInfluence.prototype.CleanMoraleInfluence = function()
 		false
 	);
 	cmpRangeManager.EnableActiveQuery(this.rangeQueryEnemy);
+};
 
-}
-
-// Instant morale increase/damage to nearby units
+/**
+ * Instant morale increase/damage to nearby units.
+ *
+ * @param {string} event - Event that triggers the influence (currently unused).
+ */
 MoraleInfluence.prototype.CauseMoraleInstantInfluence = function(event)
 {
 	let damageMultiplier = 1;
@@ -239,7 +266,7 @@ MoraleInfluence.prototype.OnRangeUpdate = function(msg)
 		this.ApplyMoraleInfluence(msg.added, false);
 		this.RemoveMoraleInfluence(msg.removed, false);
 	}
-}
+};
 
 MoraleInfluence.prototype.OnGarrisonedUnitsChanged = function(msg)
 {
@@ -250,7 +277,7 @@ MoraleInfluence.prototype.OnGarrisonedUnitsChanged = function(msg)
 MoraleInfluence.prototype.OnOwnershipChanged = function(msg)
 {
 	this.CleanMoraleInfluence();
-}
+};
 
 MoraleInfluence.prototype.OnDiplomacyChanged = function(msg)
 {
@@ -265,7 +292,6 @@ MoraleInfluence.prototype.OnDestroy = function()
 {
 	this.CleanMoraleInfluence();
 };
-
 
 MoraleInfluence.prototype.OnGlobalPlayerDefeated = function(msg)
 {

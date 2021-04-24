@@ -227,6 +227,9 @@ Morale.prototype.IncreaseMorale = function(amount)
 	return { "old": old, "new": this.Morale };
 };
 
+/*
+ * Recalculate morale points based on current maximum morale and regen rate.
+ */
 Morale.prototype.RecalculateMoraleValues = function()
 {
 	let oldMaxMorale = this.GetMaxMorale();
@@ -248,6 +251,9 @@ Morale.prototype.RecalculateMoraleValues = function()
 		this.CheckMoraleRegenTimer();
 };
 
+/*
+ * Apply morale effect to entity based on its morale level.
+ */
 Morale.prototype.ApplyMoraleEffects = function()
 {
 	var highMoraleModifierName = "HighMorale";
@@ -294,12 +300,19 @@ Morale.prototype.ApplyMoraleEffects = function()
 
 	this.ChangeStance(this.entity, moraleLevel);
 
-	// let cmpIdentity = Engine.QueryInterface(this.entity, IID_Identity);
-	// if (cmpIdentity)
-	// 	cmpIdentity.SetControllable(!moraleLevel === 1);
+	let cmpIdentity = Engine.QueryInterface(this.entity, IID_Identity);
+	if (cmpIdentity)
+	{
+		cmpIdentity.SetControllable(!(moraleLevel === 1));
+	}
 };
 
-//Change unit stance based on morale level
+/**
+ * Change entity stance based on morale level.
+ *
+ * @param {Object} entity - The entity with stance.
+ * @param {number} moraleLevel - Current morale level of the entity.
+ */
 Morale.prototype.ChangeStance = function(entity, moraleLevel)
 {
 	var cmpUnitAI = Engine.QueryInterface(entity, IID_UnitAI);
@@ -325,7 +338,13 @@ Morale.prototype.ChangeStance = function(entity, moraleLevel)
 	}
 };
 
-Morale.prototype.CalculateMoraleAttackBonus = function(target, attacker)
+/**
+ * Calculate morale bonus when inflicting attack to another entity.
+ *
+ * @param {Object} target - The entity being attacked.
+ * @param {Object} attacker - The entity inflicting attack.
+ */
+Morale.prototype.CalculateMoraleAttackBonus = function(attacker)
 {
 	let sideFlankBonus = 1;
 	let backFlankBonus = 2;
@@ -333,7 +352,7 @@ Morale.prototype.CalculateMoraleAttackBonus = function(target, attacker)
 	let sideAngleToleration = 2.0;
 	let flankBonus = 0;
 
-	let cmpTargetPosition = Engine.QueryInterface(target, IID_Position);
+	let cmpTargetPosition = Engine.QueryInterface(this.entity, IID_Position);
 	let cmpAttackerPosition = Engine.QueryInterface(attacker, IID_Position);
 
 	if (!cmpAttackerPosition || !cmpAttackerPosition.IsInWorld())

@@ -312,7 +312,7 @@ Attacking.prototype.HandleAttackEffects = function(target, attackType, attackDat
 
 	let cmpMorale = Engine.QueryInterface(target, IID_Morale);
 	if (cmpMorale)
-		cmpMorale.CalculateMoraleAttackBonus(target, attacker);
+		cmpMorale.CalculateMoraleAttackBonus(attacker);
 
 	let targetState = {};
 	for (let receiver of g_AttackEffects.Receivers())
