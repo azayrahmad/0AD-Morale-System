@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Entity parent="template_structure">
+  <Identity>
+    <Classes datatype="tokens">ConquestCritical</Classes>
+    <GenericName>Civic Structure</GenericName>
+    <VisibleClasses datatype="tokens">Civic</VisibleClasses>
+  </Identity>
+  <MoraleInfluence>
+    <Significance>5</Significance>
+  </MoraleInfluence>
+  <Resistance>
+    <Entity>
+      <Damage>
+        <Hack>20</Hack>
+        <Pierce>30</Pierce>
+        <Crush>3</Crush>
+      </Damage>
+    </Entity>
+    <Foundation>
+      <Damage>
+        <Hack>1</Hack>
+        <Pierce>5</Pierce>
+        <Crush>1</Crush>
+      </Damage>
+    </Foundation>
+  </Resistance>
+</Entity>

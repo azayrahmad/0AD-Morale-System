@@ -332,6 +332,9 @@ Morale.prototype.CleanMoraleInfluence = function()
 	cmpRangeManager.EnableActiveQuery(this.rangeQueryEnemy);
 };
 
+/**
+ * Execute morale regeneration based on current regen rate.
+ */
 Morale.prototype.ExecuteRegeneration = function()
 {
 	let regen = this.GetCurrentRegenRate();
@@ -390,7 +393,7 @@ Morale.prototype.ReduceMorale = function(amount)
 
 	this.Morale -= amount;
 	this.RegisterMoraleChanged(oldMorale);
-	if (this.IsMoraleLevelChanged(oldMoraleLevel))
+	//if (this.IsMoraleLevelChanged(oldMoraleLevel))
 		this.ApplyMoraleEffects();
 	return { "MoraleChange": this.Morale - oldMorale };
 };
@@ -407,7 +410,7 @@ Morale.prototype.IncreaseMorale = function(amount)
 	this.Morale = Math.min(this.Morale + amount, this.GetMaxMorale());
 
 	this.RegisterMoraleChanged(old);
-	if (this.IsMoraleLevelChanged(oldMoraleLevel))
+	//if (this.IsMoraleLevelChanged(oldMoraleLevel))
 		this.ApplyMoraleEffects();
 	return { "old": old, "new": this.Morale };
 };
@@ -485,11 +488,11 @@ Morale.prototype.ApplyMoraleEffects = function()
 
 	this.ChangeStance(this.entity, moraleLevel);
 
-	let cmpIdentity = Engine.QueryInterface(this.entity, IID_Identity);
-	if (cmpIdentity)
-	{
-		cmpIdentity.SetControllable(!(moraleLevel === 1));
-	}
+	// let cmpIdentity = Engine.QueryInterface(this.entity, IID_Identity);
+	// if (cmpIdentity)
+	// {
+	// 	cmpIdentity.SetControllable(!(moraleLevel === 1));
+	// }
 };
 
 /**
