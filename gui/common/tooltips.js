@@ -155,7 +155,7 @@ function getMoraleTooltip(template)
 	warn("moraledisplayed")
 	return sprintf(translate("%(label)s %(details)s"), {
 		"label": headerFont(translate("Morale:")),
-		"details": template.morale.max
+		"details": template.morale
 	});
 }
 

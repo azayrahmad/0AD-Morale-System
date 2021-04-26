@@ -12,7 +12,6 @@ StatusBars.prototype.Sprites = [
 	"UpgradeBar",
 	"ResourceSupplyBar",
 	"CaptureBar",
-	"MoraleBar",
 	"HealthBar",
 	"AuraIcons",
 	"RankIcon",
