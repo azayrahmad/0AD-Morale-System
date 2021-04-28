@@ -53,7 +53,7 @@ Morale.prototype.Init = function()
 
 	//TODO: Make these customizable in template
 	this.moraleRegenMultiplier = 0.1; 		// Morale influence regen multiplier
-	this.moraleVisionRangeMultiplier = 0.3 	// Range of morale influence, multiplied from entity's vision range
+	this.moraleVisionRangeMultiplier = 0.3; 	// Range of morale influence, multiplied from entity's vision range
 	this.moraleLevelEffectThreshold = 2; 	// Morale level on which Demoralized effect is applied
 
 	this.CheckMoraleRegenTimer();
@@ -222,12 +222,12 @@ Morale.prototype.CalculateMoraleInfluence = function(ent, ally)
 };
 
 /**
- * Applying morale influence by updating regenRate of all entities in range.
+ * Receiving morale influence from all entities in range.
  *
  * @param {Object} ents - Collection of entity with influence in range.
  * @param {boolean} ally - Whether the entity is allied to this entity.
  */
-Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
+Morale.prototype.ReceiveMoraleInfluence = function(ents, ally)
 {
 	var cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
 	for (let ent of ents)
@@ -263,7 +263,7 @@ Morale.prototype.ApplyMoraleInfluence = function(ents, ally)
 };
 
 /**
- * Removing applied morale influence when entities leaving the range.
+ * Removing applied morale influence when entities leave the range.
  *
  * @param {Object} ents - Collection of entity with influence leaving the range.
  * @param {boolean} ally - Whether the entity is allied to this entity.
@@ -621,19 +621,19 @@ Morale.prototype.OnRangeUpdate = function(msg)
 {
 	if (msg.tag == this.rangeQuery)
 	{
-		this.ApplyMoraleInfluence(msg.added, true);
+		this.ReceiveMoraleInfluence(msg.added, true);
 		this.RemoveMoraleInfluence(msg.removed, true);
 	}
 	if (msg.tag == this.rangeQueryEnemy)
 	{
-		this.ApplyMoraleInfluence(msg.added, false);
+		this.ReceiveMoraleInfluence(msg.added, false);
 		this.RemoveMoraleInfluence(msg.removed, false);
 	}
 };
 
 Morale.prototype.OnGarrisonedUnitsChanged = function(msg)
 {
-	this.ApplyMoraleInfluence(msg.added, true);
+	this.ReceiveMoraleInfluence(msg.added, true);
 	this.RemoveMoraleInfluence(msg.removed, true);
 };
 
