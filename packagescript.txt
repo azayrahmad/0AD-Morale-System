@@ -1,0 +1,1 @@
+binaries/system/pyrogenesis -mod=package_mod -mod=0AD-morale-system -archivebuild="binaries/data/mods/0AD-morale-system" -archivebuild-output="0AD-morale-system.pyromod" -archivebuild-compress
