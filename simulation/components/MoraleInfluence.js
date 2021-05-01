@@ -54,6 +54,20 @@ MoraleInfluence.prototype.GetSignificance = function()
 	return this.significance;
 };
 
+
+/**
+ * Set morale significance of the entity.
+ *
+ * The higher the entity's significance, the greater morale influence it has
+ * to nearby entities.
+ *
+ * @param {number} value of Morale significance for the entity.
+ */
+MoraleInfluence.prototype.SetSignificance = function(value)
+{
+	this.significance = value;
+};
+
 /**
  * Instant morale increase/damage to nearby units.
  *

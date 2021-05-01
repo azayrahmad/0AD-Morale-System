@@ -1223,7 +1223,7 @@ PETRA.AttackPlan.prototype.StartAttack = function(gameState)
 			ent.setStance(stance);
 	}
 
-    this.unitCollection.setFormation("battle_line")
+    this.unitCollection.setFormation("battle_line");
 
 	let rallyAccess = gameState.ai.accessibility.getAccessValue(this.rallyPoint);
 	let targetAccess = PETRA.getLandAccess(gameState, this.target);
@@ -1277,6 +1277,9 @@ PETRA.AttackPlan.prototype.update = function(gameState, events)
 		// let's proceed on with whatever happens now.
 		this.state = "";
 		this.startingAttack = true;
+
+        this.unitCollection.setFormation("battle_line");
+
 		this.unitCollection.forEach(ent => {
 			ent.stopMoving();
 			ent.setMetadata(PlayerID, "subrole", "attacking");

@@ -260,6 +260,22 @@ Morale.prototype.ReceiveMoraleInfluence = function(ents, ally)
 			}
         }
 	}
+
+	if(ally)
+	{
+        if (this.GetMoraleLevel() === 1)
+		{
+            var cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
+    		if (cmpUnitAI)
+		 	{
+				if(ents.length && cmpUnitAI.IsFleeing())
+				{
+					cmpUnitAI.StopMoving();
+					cmpUnitAI.MoveToTarget(ents[0]);
+				}
+			}
+        }
+	}
 };
 
 /**
@@ -512,7 +528,7 @@ Morale.prototype.ChangeStance = function(entity, moraleLevel)
 		}
 		else if (moraleLevel === 5)
 		{
-			cmpUnitAI.SetStance("violent");
+			//cmpUnitAI.SetStance("violent");
 			cmpUnitAI.Cheer();
 		}
 		else
