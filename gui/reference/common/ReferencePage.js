@@ -54,6 +54,7 @@ ReferencePage.prototype.StatsFunctions = [
 	getResourceDropsiteTooltip,
 	getHealthTooltip,
 	getMoraleTooltip,
+	getMoraleInfluenceTooltip,
 	getAttackTooltip,
 	getHealerTooltip,
 	getResistanceTooltip,

@@ -158,6 +158,18 @@ function getMoraleTooltip(template)
 	});
 }
 
+
+function getMoraleInfluenceTooltip(template)
+{
+	if (!template.moraleInfluence)
+		return "";
+
+	return sprintf(translate("%(label)s %(details)s"), {
+		"label": headerFont(translate("Morale Significance:")),
+		"details": template.moraleInfluence
+	});
+}
+
 function getCurrentHealthTooltip(entState, label)
 {
 	if (!entState.maxHitpoints)
@@ -175,10 +187,12 @@ function getCurrentMoraleTooltip(entState, label)
 	if (!entState.maxMorale)
 		return "";
 
-	return sprintf(translate("%(moraleLabel)s %(current)s / %(max)s"), {
+	return sprintf(translate("%(moraleLabel)s %(current)s / %(max)s (%(positive)s%(regenRate)s)"), {
 		"moraleLabel": headerFont(label || translate("Morale:")),
 		"current": Math.round(entState.morale),
-		"max": Math.round(entState.maxMorale)
+		"max": Math.round(entState.maxMorale),
+		"positive" : entState.regenRate > 0 ? "+" : "",
+		"regenRate" : Math.round(entState.regenRate * 10) / 10
 	});
 }
 
