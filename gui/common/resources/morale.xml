@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<setup>
+	<icon name="icon_morale_0"
+		sprite="stretched:session/icons/morale/0.png"
+		size="16 16"
+	/>
+	<icon name="icon_morale_1"
+		sprite="stretched:session/icons/morale/1.png"
+		size="16 16"
+	/>
+	<icon name="icon_morale_2"
+		sprite="stretched:session/icons/morale/2.png"
+		size="16 16"
+	/>
+	<icon name="icon_morale_3"
+		sprite="stretched:session/icons/morale/3.png"
+		size="16 16"
+	/>
+	<icon name="icon_morale_4"
+		sprite="stretched:session/icons/morale/4.png"
+		size="16 16"
+	/>
+	<icon name="icon_morale_5"
+		sprite="stretched:session/icons/morale/5.png"
+		size="16 16"
+	/>
+</setup>

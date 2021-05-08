@@ -31,6 +31,10 @@ function resourceIcon(resource)
 {
 	return '[icon="icon_' + resource + '"]';
 }
+function moraleIcon(level)
+{
+	return '[icon="icon_morale_' + level + '"]';
+}
 
 function resourceNameFirstWord(type)
 {
@@ -187,8 +191,9 @@ function getCurrentMoraleTooltip(entState, label)
 	if (!entState.maxMorale)
 		return "";
 
-	return sprintf(translate("%(moraleLabel)s %(current)s / %(max)s (%(positive)s%(regenRate)s)"), {
+	return sprintf(translate("%(moraleLabel)s %(moraleLevel)s %(current)s / %(max)s (%(positive)s%(regenRate)s)"), {
 		"moraleLabel": headerFont(label || translate("Morale:")),
+		"moraleLevel": moraleIcon(entState.moraleLevel),
 		"current": Math.round(entState.morale),
 		"max": Math.round(entState.maxMorale),
 		"positive" : entState.regenRate > 0 ? "+" : "",
