@@ -131,11 +131,27 @@ Morale.prototype.GetRegenRate = function()
  * Get base idle regen rate.
  *
  * Idle regen rate is the additional regen rate if the entity is idle.
+ * Territory bonus applied when idling on own territory.
  *
  * @returns {number} Number of Morale idle regen rate for this entity as set in template.
  */
 Morale.prototype.GetIdleRegenRate = function()
 {
+	let territoryBonus = 0.1;
+
+	let cmpPosition = Engine.QueryInterface(this.entity, IID_Position);
+	if (!cmpPosition || !cmpPosition.IsInWorld())
+		return this.idleRegenRate;
+
+	let cmpPlayer = QueryOwnerInterface(this.entity);
+	if (!cmpPlayer)
+		return this.idleRegenRate;
+
+	let cmpTerritoryManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_TerritoryManager);
+	let pos = cmpPosition.GetPosition2D();
+	let tileOwner = cmpTerritoryManager.GetOwner(pos.x, pos.y);
+	if (tileOwner == cmpPlayer.GetPlayerID())
+		return this.idleRegenRate + territoryBonus;
 	return this.idleRegenRate;
 };
 
